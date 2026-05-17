@@ -5,35 +5,35 @@ const dashboardSnapshot = {
             variant: 'kpi-red',
             count: 15,
             title: 'Citas Vencidas',
-            description: 'Citas vencidas hoy',
+            description: 'Citas que requieren revision hoy',
         },
         {
             id: 'pending',
             variant: 'kpi-amber',
             count: 42,
             title: 'Citas Pendientes',
-            description: 'Citas pendientes de confirmación',
+            description: 'Citas pendientes de confirmacion',
         },
         {
             id: 'total',
             variant: 'kpi-green',
             count: 124,
             title: 'Citas Totales',
-            description: 'Citas totales programadas hoy',
+            description: 'Citas programadas para la semana',
         },
     ],
     upcomingAppointments: [
-        '09:00 AM - Juan Pérez',
+        '09:00 AM - Juan Perez',
         '10:30 AM - Maria Gomez',
         '12:00 PM - Dr. Garcia',
         '02:00 PM - Lucia Soto',
     ],
     schedule: {
-        days: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+        days: ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'],
         rows: [
             {
                 time: '09:00',
-                events: ['Juan Pérez', '', '', '', '', ''],
+                events: ['Juan Perez', '', '', '', 'Ana Torres', ''],
             },
             {
                 time: '10:30',
@@ -41,11 +41,15 @@ const dashboardSnapshot = {
             },
             {
                 time: '12:00',
-                events: ['Dr. Garcia', '', '', '', '', ''],
+                events: ['Dr. Garcia', '', '', 'Carlos Ruiz', '', ''],
             },
             {
                 time: '14:00',
                 events: ['', 'Lucia Soto', '', 'Lucia Soto', '', ''],
+            },
+            {
+                time: '16:30',
+                events: ['', '', 'Rosa Medina', '', 'Dr. Rivera', ''],
             },
         ],
     },

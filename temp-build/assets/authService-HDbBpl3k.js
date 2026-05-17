@@ -1,1 +1,0 @@
-import{a as e}from"./app-B34X1Kpk.js";var t={login(e,t={}){e.transform(e=>({...e,remember:e.remember?`on`:``})).post(route(`login`),t)},logout(t={}){e.post(route(`logout`),{},t)}};export{t};
