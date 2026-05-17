@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use App\Models\Doctor;
+use App\Models\Specialty;
 use Illuminate\Http\Request;
 use App\Services\UserProfileImageService;
 use Illuminate\Http\RedirectResponse;
@@ -71,6 +73,22 @@ class UserManagementController extends Controller
             ])->save();
         }
 
+        // If the user is a doctor, create the corresponding doctor record (use first active specialty)
+        if (($validated['rol'] ?? '') === 'doctor') {
+            $existing = Doctor::query()->where('user_id', $user->id)->first();
+            if (! $existing) {
+                $spec = Specialty::query()->where('status', 'activo')->first();
+                if ($spec) {
+                    Doctor::query()->create([
+                        'user_id' => $user->id,
+                        'specialty_id' => $spec->specialty_id,
+                        'license_number' => 'AUTO-'.str_pad((string) $user->id, 4, '0', STR_PAD_LEFT),
+                        'status' => 'activo',
+                    ]);
+                }
+            }
+        }
+
         return back()->with('status', 'Usuario creado correctamente.');
     }
 
@@ -93,6 +111,22 @@ class UserManagementController extends Controller
         }
 
         $user->update($data);
+
+        // If role changed to doctor and no doctor record exists, create one
+        if (($data['rol'] ?? null) === 'doctor') {
+            $existing = Doctor::query()->where('user_id', $user->id)->first();
+            if (! $existing) {
+                $spec = Specialty::query()->where('status', 'activo')->first();
+                if ($spec) {
+                    Doctor::query()->create([
+                        'user_id' => $user->id,
+                        'specialty_id' => $spec->specialty_id,
+                        'license_number' => 'AUTO-'.str_pad((string) $user->id, 4, '0', STR_PAD_LEFT),
+                        'status' => 'activo',
+                    ]);
+                }
+            }
+        }
 
         return back()->with('status', 'Usuario actualizado correctamente.');
     }

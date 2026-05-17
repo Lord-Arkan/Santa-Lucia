@@ -34,6 +34,7 @@ const navItems = [
     { label: 'Citas', routeName: 'dashboard', icon: 'M7 2v3M17 2v3M4 8h16M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm4 7h3v3H9v-3Z' },
     { label: 'Servicios', routeName: 'services.index', icon: 'M12 3 4 7v10l8 4 8-4V7l-8-4Zm0 0v18M4 7l8 4 8-4' },
     { label: 'Pacientes', routeName: 'patients.index', icon: 'M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-1a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 20a6 6 0 0 1 12 0v1H2v-1Zm12.5 1v-1a7.5 7.5 0 0 0-2.1-5.2A5 5 0 0 1 22 18v3h-7.5Z' },
+    { label: 'Horarios', routeName: 'doctor-schedules.index', icon: 'M12 8v5l3 3' },
     { label: 'Doctores', routeName: 'doctors.index', icon: 'M12 2a5 5 0 0 0-5 5v2H5a2 2 0 0 0-2 2v8a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-8a2 2 0 0 0-2-2h-2V7a5 5 0 0 0-5-5Zm-3 7V7a3 3 0 1 1 6 0v2H9Zm2 5h2v2h2v2h-2v2h-2v-2H9v-2h2v-2Z' },
     { label: 'Historial', routeName: 'dashboard', icon: 'M5 3h11l3 3v15H5V3Zm10 0v4h4M8 11h8M8 15h8M8 19h5' },
     { label: 'Reportes', routeName: 'dashboard', icon: 'M5 19V5h14v14H5Zm4-3V9m4 7v-5m4 5v-8' },

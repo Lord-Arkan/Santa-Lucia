@@ -52,4 +52,13 @@ Route::middleware([
         ->only(['index', 'store', 'update', 'destroy'])
         ->parameters(['services' => 'service'])
         ->middleware('role:administrador,jefe_area');
+
+    Route::patch('doctor-schedules/{schedule}/toggle-status', [\App\Http\Controllers\DoctorScheduleManagementController::class, 'toggleStatus'])
+        ->name('doctor-schedules.toggleStatus')
+        ->middleware('role:administrador,doctor');
+
+    Route::resource('doctor-schedules', \App\Http\Controllers\DoctorScheduleManagementController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->parameters(['doctor-schedules' => 'schedule'])
+        ->middleware('role:administrador,doctor');
 });
