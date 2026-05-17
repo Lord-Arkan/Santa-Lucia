@@ -61,4 +61,22 @@ Route::middleware([
         ->only(['index', 'store', 'update', 'destroy'])
         ->parameters(['doctor-schedules' => 'schedule'])
         ->middleware('role:administrador,doctor');
+
+    // Appointments (Citas)
+    Route::get('appointments/slots', [\App\Http\Controllers\AppointmentManagementController::class, 'slots'])
+        ->name('appointments.slots')
+        ->middleware('role:administrador,asistente,doctor');
+
+    Route::patch('appointments/{appointment}/update-status', [\App\Http\Controllers\AppointmentManagementController::class, 'updateStatus'])
+        ->name('appointments.updateStatus')
+        ->middleware('role:administrador,doctor');
+
+    Route::post('appointments/patients', [\App\Http\Controllers\AppointmentManagementController::class, 'storePatient'])
+        ->name('appointments.patients.store')
+        ->middleware('role:administrador,asistente,doctor');
+
+    Route::resource('appointments', \App\Http\Controllers\AppointmentManagementController::class)
+        ->only(['index', 'create', 'store', 'destroy'])
+        ->parameters(['appointments' => 'appointment'])
+        ->middleware('role:administrador,asistente,doctor');
 });
