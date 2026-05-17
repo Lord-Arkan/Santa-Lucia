@@ -38,4 +38,13 @@ Route::middleware([
         ->only(['index', 'store', 'update', 'destroy'])
         ->parameters(['doctors' => 'doctor'])
         ->middleware('role:administrador,jefe_area');
+
+    Route::patch('services/{service}/toggle-status', [\App\Http\Controllers\ServiceManagementController::class, 'toggleStatus'])
+        ->name('services.toggleStatus')
+        ->middleware('role:administrador,jefe_area');
+
+    Route::resource('services', \App\Http\Controllers\ServiceManagementController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->parameters(['services' => 'service'])
+        ->middleware('role:administrador,jefe_area');
 });

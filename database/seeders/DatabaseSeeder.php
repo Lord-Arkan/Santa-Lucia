@@ -62,6 +62,9 @@ class DatabaseSeeder extends Seeder
         }
 
         // Seed specialties
-        $this->call([\Database\Seeders\SpecialtySeeder::class]);
+        $this->call([
+            \Database\Seeders\SpecialtySeeder::class,
+            \Database\Seeders\ServiceSeeder::class,
+        ]);
     }
 }
