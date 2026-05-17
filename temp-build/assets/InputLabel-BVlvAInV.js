@@ -1,0 +1,1 @@
+import{C as e,L as t,T as n,g as r}from"./app-B34X1Kpk.js";var i={class:`block font-medium text-sm text-gray-700`},a={key:0},o={key:1},s={__name:`InputLabel`,props:{value:String},setup(s){return(c,l)=>(e(),r(`label`,i,[s.value?(e(),r(`span`,a,t(s.value),1)):(e(),r(`span`,o,[n(c.$slots,`default`)]))]))}};export{s as t};
