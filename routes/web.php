@@ -13,9 +13,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     \App\Http\Middleware\EnsureUserIsActive::class,
 ])->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('users', UserManagementController::class)
         ->only(['index', 'store', 'update', 'destroy'])
@@ -76,7 +74,7 @@ Route::middleware([
         ->middleware('role:administrador,asistente,doctor');
 
     Route::resource('appointments', \App\Http\Controllers\AppointmentManagementController::class)
-        ->only(['index', 'create', 'store', 'destroy'])
+        ->only(['index', 'create', 'store', 'show', 'destroy'])
         ->parameters(['appointments' => 'appointment'])
         ->middleware('role:administrador,asistente,doctor');
 });

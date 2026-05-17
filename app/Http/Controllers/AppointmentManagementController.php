@@ -349,6 +349,83 @@ class AppointmentManagementController extends Controller
         return back()->with('status', 'Estado de cita actualizado.');
     }
 
+    public function show(Request $request, Appointment $appointment): Response
+    {
+        $appointment->load(['patient', 'doctor.user', 'service', 'doctor.specialty']);
+
+        $statusMap = [
+            'SCHEDULED' => 'Programada',
+            'COMPLETED' => 'Completada',
+            'CANCELLED' => 'Cancelada',
+            'NO_SHOW' => 'No asistió',
+        ];
+
+        $formatTime = function ($t) {
+            if ($t instanceof \DateTimeInterface) {
+                return $t->format('H:i');
+            }
+
+            if (is_string($t)) {
+                return strlen($t) >= 5 ? substr($t, 0, 5) : $t;
+            }
+
+            return null;
+        };
+
+        $patient = $appointment->patient;
+        $doctor = $appointment->doctor;
+        $service = $appointment->service;
+
+        $patientArr = $patient ? [
+            'patient_id' => $patient->patient_id,
+            'first_name' => $patient->first_name,
+            'last_name' => $patient->last_name,
+            'name' => trim($patient->first_name . ' ' . $patient->last_name),
+            'document_type' => $patient->document_type,
+            'document_number' => $patient->document_number,
+            'phone' => $patient->phone,
+            'email' => $patient->email,
+            'birth_date' => $patient->birth_date?->format('d/m/Y'),
+            'address' => $patient->address,
+            'blood_type' => $patient->blood_type,
+            'allergies' => $patient->allergies,
+            'previous_conditions' => $patient->previous_conditions,
+            'insurance_type' => $patient->insurance_type,
+            'status' => $patient->status,
+        ] : null;
+
+        $doctorArr = $doctor ? [
+            'doctor_id' => $doctor->doctor_id,
+            'name' => $doctor->user?->name,
+            'specialty' => $doctor->specialty?->name,
+            'license_number' => $doctor->license_number,
+            'status' => $doctor->status,
+        ] : null;
+
+        $serviceArr = $service ? [
+            'service_id' => $service->service_id,
+            'name' => $service->name,
+            'duration_minutes' => $service->duration_minutes,
+        ] : null;
+
+        $appointmentArr = [
+            'appointment_id' => $appointment->appointment_id,
+            'patient' => $patientArr,
+            'doctor' => $doctorArr,
+            'service' => $serviceArr,
+            'appointment_date' => $appointment->appointment_date?->format('d/m/Y'),
+            'start_time' => $formatTime($appointment->start_time),
+            'end_time' => $formatTime($appointment->end_time),
+            'status' => $appointment->status,
+            'status_label' => $statusMap[$appointment->status] ?? $appointment->status,
+            'created_at' => $appointment->created_at?->format('d/m/Y H:i'),
+        ];
+
+        return Inertia::render('Appointments/Show', [
+            'appointment' => $appointmentArr,
+        ]);
+    }
+
     public function destroy(Request $request, Appointment $appointment): RedirectResponse
     {
         $this->repo->cancelarCita($appointment->appointment_id);

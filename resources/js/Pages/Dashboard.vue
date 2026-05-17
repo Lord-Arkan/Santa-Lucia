@@ -4,13 +4,16 @@ import { Head } from '@inertiajs/vue3';
 import DashboardLayout from '@/Layouts/DashboardLayout.vue';
 import KpiCard from '@/Components/ui/KpiCard.vue';
 import ScheduleBoard from '@/Components/ui/ScheduleBoard.vue';
-import { dashboardService } from '@/services/dashboardService';
 
-const snapshot = dashboardService.getDashboardSnapshot();
+const props = defineProps({
+    summary: { type: Array, default: () => [] },
+    upcomingAppointments: { type: Array, default: () => [] },
+    schedule: { type: Object, default: () => ({ days: [], rows: [] }) },
+});
 
-const summary = computed(() => snapshot.summary);
-const upcomingAppointments = computed(() => snapshot.upcomingAppointments);
-const schedule = computed(() => snapshot.schedule);
+const summary = computed(() => props.summary);
+const upcomingAppointments = computed(() => props.upcomingAppointments);
+const schedule = computed(() => props.schedule);
 </script>
 
 <template>

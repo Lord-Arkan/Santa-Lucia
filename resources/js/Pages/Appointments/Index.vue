@@ -91,6 +91,10 @@ const updateStatus = ({ appointment, status }) => {
     });
 };
 
+const openShow = (a) => {
+    router.get(route('appointments.show', a.appointment_id));
+};
+
 const goTo = (url) => {
     if (!url) return;
     router.get(url, {}, { preserveState: true, replace: true });
@@ -128,7 +132,7 @@ const goTo = (url) => {
                 </div>
             </transition>
 
-            <AppointmentTable :appointments="props.appointments.data" @cancel="cancelAppointment" @updateStatus="updateStatus" />
+            <AppointmentTable :appointments="props.appointments.data" @cancel="cancelAppointment" @updateStatus="updateStatus" @show="openShow" />
 
             <div v-if="props.appointments.links" class="flex items-center justify-between px-2 py-4">
                 <div class="text-sm text-slate-400">Mostrando {{ props.appointments.from }} - {{ props.appointments.to }} de {{ props.appointments.total }}</div>
