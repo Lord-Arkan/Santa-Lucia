@@ -32,6 +32,11 @@ class DatabaseSeeder extends Seeder
                 'email' => 'doctor@santalucia.test',
                 'rol' => 'doctor',
             ],
+               [
+                'name' => 'Doctor Lopez',
+                'email' => 'doctor.lopez@santalucia.test',
+                'rol' => 'doctor',
+            ],
             [
                 'name' => 'Contador Principal',
                 'email' => 'contador@santalucia.test',
@@ -61,10 +66,11 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // Seed specialties
+        // Seed specialties and synchronize doctors from users
         $this->call([
             \Database\Seeders\SpecialtySeeder::class,
             \Database\Seeders\ServiceSeeder::class,
+            \Database\Seeders\DoctorsFromUsersSeeder::class,
         ]);
     }
 }

@@ -48,10 +48,19 @@ class DoctorScheduleManagementController extends Controller
             'created_at' => $s->created_at?->format('d/m/Y'),
         ]);
 
+        $myDoctor = null;
+        if ($user && $user->rol === 'doctor') {
+            $doc = Doctor::query()->with('user')->where('user_id', $user->id)->first();
+            if ($doc) {
+                $myDoctor = ['doctor_id' => $doc->doctor_id, 'name' => $doc->user?->name];
+            }
+        }
+
         return Inertia::render('DoctorSchedules/Index', [
             'doctor_schedules' => $schedules,
             'filters' => $request->only(['doctor_id']),
             'doctors' => Doctor::query()->with('user')->get()->map(fn ($d) => ['doctor_id' => $d->doctor_id, 'name' => $d->user?->name]),
+            'my_doctor' => $myDoctor,
         ]);
     }
 

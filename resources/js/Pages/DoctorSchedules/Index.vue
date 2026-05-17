@@ -16,6 +16,10 @@ const props = defineProps({
 const page = usePage();
 const showFilters = ref(false);
 
+const currentUser = computed(() => page.props.auth?.user ?? null);
+const isDoctor = computed(() => currentUser.value && currentUser.value.rol === 'doctor');
+const myDoctor = computed(() => page.props.my_doctor ?? null);
+
 const translateLabel = (label) => {
     if (!label) return '';
     return String(label)
@@ -57,6 +61,18 @@ const openCreate = () => {
     form.reset();
     form.clearErrors();
     form.status = 'activo';
+
+    // If current user is a doctor, auto-assign doctor_id
+    if (isDoctor.value) {
+        if (myDoctor.value) {
+            form.doctor_id = myDoctor.value.doctor_id;
+        } else {
+            // no doctor record found for this user; prevent opening form
+            // show error via flash or errors in page props (handled server-side)
+            return;
+        }
+    }
+
     showModal.value = true;
 };
 
@@ -143,25 +159,28 @@ const goTo = (url) => {
                 </div>
 
                 <div class="flex justify-end">
-                    <button type="button" class="rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-400 px-4 py-2 text-sm font-black text-slate-950 shadow-lg hover:opacity-95" @click="openCreate">+ Nuevo</button>
+                    <button type="button" class="rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-400 px-4 py-2 text-sm font-black text-slate-950 shadow-lg hover:opacity-95" @click="openCreate" :disabled="isDoctor && !myDoctor">+ Nuevo</button>
                 </div>
             </div>
 
             <transition name="fade">
                 <div v-show="showFilters" class="rounded-2xl border border-white/10 bg-[#0f1c27] p-4">
                     <form class="grid gap-3 sm:grid-cols-4">
-                        <div>
+                        <div v-if="!isDoctor">
                             <label class="block text-xs font-bold text-slate-400">Doctor</label>
                             <select class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none">
                                 <option value="">Todos</option>
                                 <option v-for="d in props.doctors" :key="d.doctor_id" :value="d.doctor_id">{{ d.name }}</option>
                             </select>
                         </div>
+                        <div v-else class="sm:col-span-4">
+                            <p class="text-sm text-rose-300">Solo puedes ver y crear horarios para tu cuenta de doctor.</p>
+                        </div>
                     </form>
                 </div>
             </transition>
 
-            <DoctorScheduleTable :schedules="props.doctor_schedules.data" :is-doctor-view="false" @edit="editSchedule" @delete="deleteSchedule" @toggle="toggleSchedule" />
+            <DoctorScheduleTable :schedules="props.doctor_schedules.data" :is-doctor-view="isDoctor" @edit="editSchedule" @delete="deleteSchedule" @toggle="toggleSchedule" />
 
             <div v-if="props.doctor_schedules.links" class="flex items-center justify-between px-2 py-4">
                 <div class="text-sm text-slate-400">Mostrando {{ props.doctor_schedules.from }} - {{ props.doctor_schedules.to }} de {{ props.doctor_schedules.total }}</div>
@@ -172,7 +191,7 @@ const goTo = (url) => {
 
             <DialogModal :show="showModal" @close="showModal = false" max-width="2xl">
                 <template #content>
-                    <DoctorScheduleForm :form="form" :editingSchedule="editingSchedule" :doctors="props.doctors" @submit="submit" @cancel="resetForm" />
+                    <DoctorScheduleForm :form="form" :editingSchedule="editingSchedule" :doctors="props.doctors" :is-doctor="isDoctor" :my-doctor="myDoctor" @submit="submit" @cancel="resetForm" />
                 </template>
             </DialogModal>
 
