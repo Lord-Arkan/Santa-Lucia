@@ -3,11 +3,12 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useAuth } from '@/composables/useAuth';
 import { authService } from '@/services/authService';
+import Dropdown from '@/Components/Dropdown.vue';
 
 const props = defineProps({
     title: {
         type: String,
-        default: 'Dashboard',
+        default: '',
     },
 });
 
@@ -77,7 +78,7 @@ watch(isSidebarCollapsed, (value) => {
                 <div class="px-4 pb-6 pt-8">
                     <div class="flex items-center justify-between gap-3">
                         <div class="flex min-w-0 items-center gap-3">
-                            <div class="grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-cyan-500/20">
+                            <div v-if="!isSidebarCollapsed" class="grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-cyan-500/20">
                                 <svg viewBox="0 0 48 48" class="size-7 text-white" aria-hidden="true">
                                     <path fill="currentColor" d="M18 6h12v12h12v12H30v12H18V30H6V18h12z" />
                                 </svg>
@@ -184,8 +185,8 @@ watch(isSidebarCollapsed, (value) => {
                         </div>
 
                         <div>
-                            <p class="text-xs font-bold uppercase tracking-[0.22em] text-teal-300">Panel Santa Lucia</p>
-                            <h1 class="mt-1 text-2xl font-black text-white sm:text-3xl">{{ props.title }}</h1>
+                            <p class="text-xs font-bold uppercase tracking-[0.22em] text-teal-300">Santa Lucia</p>
+                            <h1 v-if="props.title" class="mt-1 text-2xl font-black text-white sm:text-3xl">{{ props.title }}</h1>
                         </div>
                     </div>
 
@@ -213,7 +214,20 @@ watch(isSidebarCollapsed, (value) => {
                                 <span class="block truncate text-sm font-bold text-white">{{ userLabel }}</span>
                                 <span class="block text-[11px] font-bold uppercase tracking-[0.12em] text-teal-200">{{ userRole }}</span>
                             </span>
-                            <button class="rounded-xl px-3 py-2 text-xs font-bold text-teal-200 transition hover:bg-white/10 hover:text-white" type="button" @click="logout">Logout</button>
+
+                            <Dropdown align="right" width="40" :content-classes="['py-1','bg-[#0f1c27]','rounded-md']">
+                                <template #trigger>
+                                    <button class="rounded-xl px-3 py-2 text-xs font-bold text-teal-200 transition hover:bg-white/10 hover:text-white" type="button" aria-label="Abrir menú de usuario">
+                                        <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                    </button>
+                                </template>
+
+                                <template #content>
+                                    <button class="w-full text-left px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5 whitespace-nowrap min-w-max" @click="logout">Cerrar sesión</button>
+                                </template>
+                            </Dropdown>
                         </div>
                     </div>
                 </div>

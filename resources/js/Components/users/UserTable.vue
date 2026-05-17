@@ -20,7 +20,6 @@ const emit = defineEmits(['edit', 'delete']);
     <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-[#162130] shadow-xl shadow-slate-950/10">
         <div class="border-b border-white/10 p-5">
             <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">Usuarios</p>
-            <h2 class="mt-2 text-2xl font-black text-white">Listado del sistema</h2>
         </div>
 
         <div class="overflow-x-auto">

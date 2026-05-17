@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
+use Illuminate\Http\Request;
 use App\Services\UserProfileImageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
@@ -17,22 +18,38 @@ class UserManagementController extends Controller
     {
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $query = User::query();
+
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%'.$request->query('name').'%');
+        }
+
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%'.$request->query('email').'%');
+        }
+
+        if ($request->filled('rol')) {
+            $query->where('rol', $request->query('rol'));
+        }
+
+        $users = $query->latest()->paginate(10);
+
+        $users->getCollection()->transform(fn (User $user) => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'rol' => $user->rol,
+            'profile_photo_path' => $user->profile_photo_path,
+            'profile_photo_url' => $user->profile_photo_url,
+            'created_at' => $user->created_at?->format('d/m/Y'),
+        ]);
+
         return Inertia::render('Users/Index', [
-            'users' => User::query()
-                ->latest()
-                ->get()
-                ->map(fn (User $user) => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'rol' => $user->rol,
-                    'profile_photo_path' => $user->profile_photo_path,
-                    'profile_photo_url' => $user->profile_photo_url,
-                    'created_at' => $user->created_at?->format('d/m/Y'),
-                ]),
+            'users' => $users,
             'roles' => $this->roles(),
+            'filters' => $request->only(['name', 'email', 'rol']),
         ]);
     }
 

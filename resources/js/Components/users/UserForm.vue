@@ -32,22 +32,21 @@ watch(() => props.editingUser, () => {
 </script>
 
 <template>
-    <form class="rounded-[2rem] border border-white/10 bg-[#162130] p-5 shadow-xl shadow-slate-950/10" @submit.prevent="$emit('submit')">
+    <form class="relative rounded-[2rem] border border-white/10 bg-[#162130] p-5 shadow-xl shadow-slate-950/10" @submit.prevent="$emit('submit')">
+        <button
+            type="button"
+            @click="$emit('cancel')"
+            aria-label="Cerrar"
+            class="absolute top-3 right-3 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-[#0b1620] text-slate-300 shadow-md hover:bg-white/10 hover:text-white transition"
+        >
+            <span class="sr-only">Cerrar</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
         <div class="flex items-start justify-between gap-4">
             <div>
-                <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">Mantenimiento</p>
-                <h2 class="mt-2 text-2xl font-black text-white">{{ isEditing ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
-                <p class="mt-2 text-sm leading-6 text-slate-400">Gestiona accesos, rol e imagen de perfil.</p>
+                <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">{{ isEditing ? 'Editar usuario' : 'Nuevo usuario' }}</p>
             </div>
-
-            <button
-                v-if="isEditing"
-                type="button"
-                class="rounded-2xl border border-white/10 px-4 py-2 text-xs font-black text-slate-300 transition hover:bg-white/10 hover:text-white"
-                @click="$emit('cancel')"
-            >
-                Cancelar
-            </button>
         </div>
 
         <div class="mt-6 grid gap-4">
