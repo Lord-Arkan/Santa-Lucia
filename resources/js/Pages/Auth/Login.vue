@@ -63,7 +63,7 @@ const togglePassword = () => {
         <div class="w-full">
             <div class="mb-7 max-w-sm">
                 <p class="text-xs font-bold uppercase tracking-[0.28em] text-teal-600">Portal medico</p>
-                <h2 class="mt-3 text-4xl font-black leading-tight text-slate-900">Bienvenido de nuevo</h2>
+                <h2 class="mt-3 text-3xl font-bold leading-tight text-slate-900">Bienvenido de nuevo</h2>
                 <p class="mt-3 text-sm leading-6 text-slate-500">
                     Ingresa con tus credenciales para continuar gestionando la atencion de Santa Lucia.
                 </p>
@@ -75,7 +75,7 @@ const togglePassword = () => {
 
             <form class="max-w-[340px] rounded-[1.75rem] bg-gradient-to-br from-teal-500 via-cyan-600 to-blue-800 p-5 text-white shadow-2xl shadow-teal-900/25 sm:p-6" @submit.prevent="submit">
                 <div class="mb-5 text-center">
-                    <p class="text-2xl font-black">Iniciar sesión</p>
+                    <p class="text-xl font-semibold">Iniciar sesión</p>
                     <p class="mt-1 text-xs text-white/75">Acceso seguro al sistema clinico</p>
                 </div>
 
@@ -152,23 +152,23 @@ const togglePassword = () => {
                 <button
                     type="submit"
                     :disabled="form.processing"
-                    class="mt-6 h-12 w-full rounded-full bg-white px-5 text-sm font-black text-teal-700 shadow-lg shadow-teal-950/20 transition hover:-translate-y-0.5 hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-white/35 disabled:cursor-not-allowed disabled:opacity-70"
+                    class="mt-6 h-12 w-full rounded-full bg-white px-5 text-sm font-semibold text-teal-700 shadow-lg shadow-teal-950/20 transition hover:-translate-y-0.5 hover:bg-cyan-50 focus:outline-none focus:ring-4 focus:ring-white/35 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                     {{ form.processing ? 'Validando...' : 'Ingresar' }}
                 </button>
 
-                <p class="mt-5 text-center text-[11px] text-white/80">
+               <!--  <p class="mt-5 text-center text-[11px] text-white/80">
                     ¿No puedes acceder a tu cuenta?
                     <Link v-if="canRegister" :href="route('register')" class="font-bold text-white underline-offset-4 hover:underline">Regístrate</Link>
                     <span v-else class="font-bold text-white">Contacta al administrador</span>
-                </p>
+                </p> -->
             </form>
         </div>
     </AuthLayout>
     
     <DialogModal :show="showErrorModal" boxed box-class="bg-white" white @close="showErrorModal = false">
         <template #title>
-            <span class="text-lg font-black">Acceso</span>
+            <span class="text-lg font-bold">Acceso</span>
         </template>
 
         <template #content>
@@ -177,7 +177,7 @@ const togglePassword = () => {
 
         <template #footer>
             <div class="flex items-center gap-2">
-                <button type="button" class="rounded-2xl px-4 py-2 text-sm font-black bg-teal-400 text-slate-950" @click="showErrorModal = false">Cerrar</button>
+                <button type="button" class="rounded-2xl px-4 py-2 text-sm font-semibold bg-teal-400 text-slate-950" @click="showErrorModal = false">Cerrar</button>
             </div>
         </template>
     </DialogModal>
