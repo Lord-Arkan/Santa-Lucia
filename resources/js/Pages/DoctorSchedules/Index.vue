@@ -168,7 +168,7 @@ const goTo = (url) => {
                     <form class="grid gap-3 sm:grid-cols-4">
                         <div v-if="!isDoctor">
                             <label class="block text-xs font-bold text-slate-400">Doctor</label>
-                            <select class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none">
+                            <select class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-[#101824] px-3 text-sm text-white outline-none">
                                 <option value="">Todos</option>
                                 <option v-for="d in props.doctors" :key="d.doctor_id" :value="d.doctor_id">{{ d.name }}</option>
                             </select>

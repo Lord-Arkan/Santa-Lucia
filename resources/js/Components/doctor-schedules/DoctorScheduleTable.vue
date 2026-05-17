@@ -38,9 +38,12 @@ const emit = defineEmits(['edit', 'delete', 'toggle']);
                         <td class="px-5 py-4 text-sm font-semibold text-slate-400">{{ s.created_at }}</td>
                         <td class="px-5 py-4">
                             <div class="flex justify-end gap-2">
-                                <button type="button" class="rounded-xl border px-3 py-2 text-xs font-black text-slate-300 transition hover:bg-white/10 hover:text-white" @click="$emit('edit', s)">Editar</button>
-                                <button type="button" :class="['rounded-xl border px-3 py-2 text-xs font-black transition', s.status === 'activo' ? 'border-rose-300/20 text-rose-200 hover:bg-rose-400/10' : 'border-emerald-300/20 text-emerald-200 hover:bg-emerald-400/10']" @click="$emit('toggle', s)">{{ s.status === 'activo' ? 'Inhabilitar' : 'Habilitar' }}</button>
-                                <button type="button" class="rounded-xl border border-rose-300/20 px-3 py-2 text-xs font-black text-rose-200 transition hover:bg-rose-400/10" @click="$emit('delete', s)">Eliminar</button>
+                                <button v-if="!s.locked" type="button" class="rounded-xl border px-3 py-2 text-xs font-black text-slate-300 transition hover:bg-white/10 hover:text-white" @click="$emit('edit', s)">Editar</button>
+                                <button v-if="!s.locked" type="button" :class="['rounded-xl border px-3 py-2 text-xs font-black transition', s.status === 'activo' ? 'border-rose-300/20 text-rose-200 hover:bg-rose-400/10' : 'border-emerald-300/20 text-emerald-200 hover:bg-emerald-400/10']" @click="$emit('toggle', s)">{{ s.status === 'activo' ? 'Inhabilitar' : 'Habilitar' }}</button>
+                                <button v-if="!s.locked" type="button" class="rounded-xl border border-rose-300/20 px-3 py-2 text-xs font-black text-rose-200 transition hover:bg-rose-400/10" @click="$emit('delete', s)">Eliminar</button>
+                                <template v-if="s.locked">
+                                    <span class="ml-2 text-[11px] font-semibold text-rose-300">Tiene citas pendientes</span>
+                                </template>
                             </div>
                         </td>
                     </tr>

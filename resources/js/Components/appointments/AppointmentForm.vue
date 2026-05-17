@@ -26,6 +26,14 @@ const loadingSlots = ref(false);
 
 const localForm = useForm(props.form);
 
+const minDate = computed(() => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+});
+
 const localPatients = ref(JSON.parse(JSON.stringify(props.patients || [])));
 const showPatientModal = ref(false);
 const patientForm = reactive({ ...patientService.defaultForm(), processing: false, errors: {} });
@@ -62,6 +70,11 @@ const doctorsFiltered = computed(() => {
 
 const fetchSlots = () => {
     if (!localForm.service_id || !localForm.appointment_date) {
+        slots.value = [];
+        return;
+    }
+    // Prevent fetching slots for past dates
+    if (localForm.appointment_date < minDate.value) {
         slots.value = [];
         return;
     }
@@ -141,7 +154,7 @@ const cancel = () => {
 
             <div>
                 <label class="block text-xs font-bold text-slate-400">Fecha</label>
-                <input v-model="localForm.appointment_date" type="date" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-[#101824] px-3 text-sm text-white outline-none" />
+                <input v-model="localForm.appointment_date" :min="minDate" type="date" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-[#101824] px-3 text-sm text-white outline-none" />
                 <span v-if="localForm.errors.appointment_date" class="mt-1 block text-xs font-bold text-rose-300">{{ localForm.errors.appointment_date }}</span>
             </div>
 

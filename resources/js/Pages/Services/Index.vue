@@ -194,7 +194,7 @@ const toggleServiceStatus = (service) => {
 
                         <div>
                             <label class="block text-xs font-bold text-slate-400">Especialidad</label>
-                            <select v-model="filters.specialty_id" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none">
+                            <select v-model="filters.specialty_id" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-[#101824] px-3 text-sm text-white outline-none">
                                 <option value="">Todas</option>
                                 <option v-for="s in props.specialties" :key="s.specialty_id" :value="s.specialty_id">{{ s.name }}</option>
                             </select>
