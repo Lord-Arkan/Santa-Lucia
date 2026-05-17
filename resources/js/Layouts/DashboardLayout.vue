@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import { useAuth } from '@/composables/useAuth';
 import { authService } from '@/services/authService';
 import Dropdown from '@/Components/Dropdown.vue';
@@ -14,7 +14,7 @@ const props = defineProps({
 
 const { user } = useAuth();
 const isSidebarCollapsed = ref(false);
-const isSettingsOpen = ref(true);
+const isSettingsOpen = ref(false);
 
 const userLabel = computed(() => user.value?.name ?? 'Usuario');
 const userRole = computed(() => user.value?.rol ?? 'asistente');
@@ -61,10 +61,39 @@ const logout = () => {
 
 onMounted(() => {
     isSidebarCollapsed.value = window.localStorage.getItem('santa-lucia-sidebar-collapsed') === 'true';
+
+    // Restaurar estado de configuración si el usuario lo guardó;
+    // no abrir automáticamente al navegar entre opciones.
+    try {
+        const stored = window.localStorage.getItem('santa-lucia-settings-open');
+        if (stored !== null) {
+            isSettingsOpen.value = stored === 'true';
+        }
+    } catch (e) {
+        // ignorar en entornos sin window
+    }
+});
+
+// Cerrar la sección "Configuracion" automáticamente cuando la ruta cambie
+// a una que no pertenezca a settings.
+const page = usePage();
+watch(() => page.url, () => {
+    try {
+        const activeSettings = settingsItems.some((i) => isRouteActive(i.routeName));
+        if (!activeSettings) {
+            isSettingsOpen.value = false;
+        }
+    } catch (e) {
+        // ignore
+    }
 });
 
 watch(isSidebarCollapsed, (value) => {
     window.localStorage.setItem('santa-lucia-sidebar-collapsed', String(value));
+});
+
+watch(isSettingsOpen, (value) => {
+    window.localStorage.setItem('santa-lucia-settings-open', String(value));
 });
 </script>
 
@@ -73,8 +102,22 @@ watch(isSidebarCollapsed, (value) => {
         class="min-h-screen bg-slate-950 text-slate-100 transition-[grid-template-columns] duration-300 lg:grid"
         :class="isSidebarCollapsed ? 'lg:grid-cols-[88px_1fr]' : 'lg:grid-cols-[292px_1fr]'"
     >
-        <aside class="hidden border-r border-white/10 bg-[#0f1c27] lg:block">
+        <aside class="relative hidden border-r border-white/10 bg-[#0f1c27] lg:block">
             <div class="flex h-full flex-col">
+                <!-- Área clicable en el margen derecho del sidebar para acoplar/desacoplar (click en cualquier parte del borde) -->
+                <button
+                    type="button"
+                    @click="toggleSidebar"
+                    :title="isSidebarCollapsed ? 'Expandir menu' : 'Colapsar menu'"
+                    aria-label="Alternar sidebar"
+                    class="absolute right-0 top-0 h-full w-6 z-40 hidden lg:flex items-center justify-center"
+                >
+                    <span class="grid size-9 place-items-center rounded-full border border-white/10 bg-[#0f1c27]/80 text-slate-300 hover:bg-white/10 transition translate-x-1/2">
+                        <svg viewBox="0 0 24 24" class="size-5 transition-transform" :class="isSidebarCollapsed ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" aria-hidden="true">
+                            <path d="m15 5 1.4 1.4L10.8 12l5.6 5.6L15 19l-7-7 7-7Z" />
+                        </svg>
+                    </span>
+                </button>
                 <div class="px-4 pb-6 pt-8">
                     <div class="flex items-center justify-between gap-3">
                         <div class="flex min-w-0 items-center gap-3">
@@ -89,33 +132,27 @@ watch(isSidebarCollapsed, (value) => {
                             </div>
                         </div>
 
-                        <button
-                            class="grid size-10 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white"
-                            type="button"
-                            :aria-label="isSidebarCollapsed ? 'Expandir menu' : 'Colapsar menu'"
-                            @click="toggleSidebar"
-                        >
-                            <svg viewBox="0 0 24 24" class="size-5" fill="currentColor" aria-hidden="true">
-                                <path v-if="isSidebarCollapsed" d="m9 5 7 7-7 7-1.4-1.4L13.2 12 7.6 6.4 9 5Z" />
-                                <path v-else d="m15 5 1.4 1.4L10.8 12l5.6 5.6L15 19l-7-7 7-7Z" />
-                            </svg>
-                        </button>
+                        <div></div>
                     </div>
                 </div>
 
                 <nav class="min-h-0 flex-1 overflow-y-auto px-4 pb-6" aria-label="Menu principal">
                     <p v-if="!isSidebarCollapsed" class="px-3 text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Menu</p>
+
+                    
+
                     <ul class="mt-4 space-y-1.5">
                         <li v-for="item in navItems" :key="item.label">
                             <Link
-                                :href="route(item.routeName)"
-                                class="group flex items-center rounded-2xl px-3 py-3 text-sm font-bold transition"
-                                :class="[
-                                    isSidebarCollapsed ? 'justify-center' : 'justify-between',
-                                    isRouteActive(item.routeName) ? 'bg-teal-400/15 text-white shadow-inner shadow-white/5 ring-1 ring-teal-300/20' : 'text-slate-300 hover:bg-white/10 hover:text-white',
-                                ]"
-                                :title="isSidebarCollapsed ? item.label : null"
-                            >
+                                    :href="route(item.routeName)"
+                                    @click="isSettingsOpen = false"
+                                    class="group flex items-center rounded-2xl px-3 py-3 text-sm font-bold transition"
+                                    :class="[
+                                        isSidebarCollapsed ? 'justify-center' : 'justify-between',
+                                        isRouteActive(item.routeName) ? 'bg-teal-400/15 text-white shadow-inner shadow-white/5 ring-1 ring-teal-300/20' : 'text-slate-300 hover:bg-white/10 hover:text-white',
+                                    ]"
+                                    :title="isSidebarCollapsed ? item.label : null"
+                                >
                                 <span class="flex items-center gap-3">
                                     <span class="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-400 transition group-hover:text-teal-200">
                                         <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" aria-hidden="true">
@@ -127,6 +164,11 @@ watch(isSidebarCollapsed, (value) => {
                             </Link>
                         </li>
                     </ul>
+
+                    <!-- Línea separadora entre Reportes y Configuracion -->
+                    <div class="mt-6">
+                        <div class="mx-3 border-t border-white/10"></div>
+                    </div>
 
                     <div class="mt-7">
                         <button
@@ -176,8 +218,14 @@ watch(isSidebarCollapsed, (value) => {
 
         <section class="min-w-0 bg-[#101824]">
             <header class="sticky top-0 z-20 border-b border-white/10 bg-[#101824]/90 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
-                <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                    <div class="flex items-center gap-3">
+                <div class="flex items-center gap-4 justify-between flex-nowrap">
+                    <div class="flex items-center gap-3 flex-nowrap">
+                        <div v-if="isSidebarCollapsed" class="hidden lg:grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-cyan-500/20 mr-2" aria-hidden="true">
+                            <svg viewBox="0 0 48 48" class="size-7 text-white" aria-hidden="true">
+                                <path fill="currentColor" d="M18 6h12v12h12v12H30v12H18V30H6V18h12z" />
+                            </svg>
+                        </div>
+
                         <div class="grid size-11 place-items-center rounded-2xl border border-white/10 bg-white/5 text-teal-200 lg:hidden" aria-hidden="true">
                             <svg viewBox="0 0 24 24" class="size-5" fill="currentColor" aria-hidden="true">
                                 <path d="M18 4h4v4h-4v4h-4V8h-4V4h4V0h4v4ZM4 9h8v2H4V9Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z" />
@@ -188,6 +236,8 @@ watch(isSidebarCollapsed, (value) => {
                             <p class="text-xs font-bold uppercase tracking-[0.22em] text-teal-300">Santa Lucia</p>
                             <h1 v-if="props.title" class="mt-1 text-2xl font-black text-white sm:text-3xl">{{ props.title }}</h1>
                         </div>
+
+                        
                     </div>
 
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
