@@ -41,7 +41,13 @@ const goTo = (url) => {
 
 const translateLabel = (label) => {
     if (!label) return '';
-    return String(label).replace(/Previous/g, 'Anterior').replace(/Next/g, 'Siguiente');
+    return String(label)
+        .replace(/pagination\.previous/g, 'Anterior')
+        .replace(/pagination\.next/g, 'Siguiente')
+        .replace(/Previous/g, 'Anterior')
+        .replace(/Next/g, 'Siguiente')
+        .replace(/previous/g, 'Anterior')
+        .replace(/next/g, 'Siguiente');
 };
 
 const editingService = ref(null);

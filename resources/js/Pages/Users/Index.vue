@@ -49,7 +49,13 @@ const goTo = (url) => {
 
 const translateLabel = (label) => {
     if (!label) return '';
-    return String(label).replace(/Previous/g, 'Anterior').replace(/Next/g, 'Siguiente');
+    return String(label)
+        .replace(/pagination\.previous/g, 'Anterior')
+        .replace(/pagination\.next/g, 'Siguiente')
+        .replace(/Previous/g, 'Anterior')
+        .replace(/Next/g, 'Siguiente')
+        .replace(/previous/g, 'Anterior')
+        .replace(/next/g, 'Siguiente');
 };
 const editingUser = ref(null);
 const showModal = ref(false);
@@ -140,6 +146,20 @@ const deleteUser = (user) => {
         onConfirm: () => router.delete(route('users.destroy', user.id), { preserveScroll: true }),
     });
 };
+
+const toggleUserStatus = (user) => {
+    const action = user.status ? 'Deshabilitar' : 'Habilitar';
+    const danger = user.status;
+
+    openConfirm({
+        title: `${action} usuario`,
+        message: `${action} a ${user.name}?`,
+        confirmText: action,
+        cancelText: 'Cancelar',
+        danger,
+        onConfirm: () => router.patch(route('users.toggleStatus', user.id), {}, { preserveScroll: true }),
+    });
+};
 </script>
 
 <template>
@@ -204,6 +224,7 @@ const deleteUser = (user) => {
                 :current-user-id="currentUserId"
                 @edit="editUser"
                 @delete="deleteUser"
+                @toggle="toggleUserStatus"
             />
 
             <div v-if="props.users.links" class="flex items-center justify-between px-2 py-4">

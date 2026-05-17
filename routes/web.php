@@ -11,6 +11,7 @@ Route::redirect('/', '/login');
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
+    \App\Http\Middleware\EnsureUserIsActive::class,
 ])->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
@@ -19,6 +20,10 @@ Route::middleware([
     Route::resource('users', UserManagementController::class)
         ->only(['index', 'store', 'update', 'destroy'])
         ->parameters(['users' => 'user'])
+        ->middleware('role:administrador,jefe_area');
+
+    Route::patch('users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])
+        ->name('users.toggleStatus')
         ->middleware('role:administrador,jefe_area');
 
     Route::patch('patients/{patient}/toggle-status', [PatientManagementController::class, 'toggleStatus'])

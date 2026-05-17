@@ -1,10 +1,11 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watchEffect } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AuthLayout from '@/Layouts/AuthLayout.vue';
 import { useLoginForm } from '@/composables/useLoginForm';
+import DialogModal from '@/Components/DialogModal.vue';
 
-defineProps({
+const props = defineProps({
     canResetPassword: {
         type: Boolean,
         default: false,
@@ -21,6 +22,34 @@ defineProps({
 
 const showPassword = ref(false);
 const { form, submit } = useLoginForm();
+
+const showErrorModal = ref(false);
+const errorMessage = ref('');
+
+watchEffect(() => {
+    let msg = '';
+    if (form && form.errors) {
+        for (const key in form.errors) {
+            const val = form.errors[key];
+            if (val) {
+                msg = val;
+                break;
+            }
+        }
+    }
+
+    if (!msg && props.status) {
+        msg = props.status;
+    }
+
+    if (msg) {
+        errorMessage.value = Array.isArray(msg) ? msg[0] : msg;
+        showErrorModal.value = true;
+    } else {
+        showErrorModal.value = false;
+        errorMessage.value = '';
+    }
+});
 
 const togglePassword = () => {
     showPassword.value = !showPassword.value;
@@ -40,7 +69,7 @@ const togglePassword = () => {
                 </p>
             </div>
 
-            <div v-if="status" class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700" role="status">
+            <div v-if="status && !showErrorModal" class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700" role="status">
                 {{ status }}
             </div>
 
@@ -67,7 +96,7 @@ const togglePassword = () => {
                             >
                         </span>
                     </label>
-                    <p v-if="form.errors.email" class="-mt-1 text-xs font-semibold text-rose-100">{{ form.errors.email }}</p>
+                    <p v-if="form.errors.email && !showErrorModal" class="-mt-1 text-xs font-semibold text-rose-100">{{ form.errors.email }}</p>
 
                     <label class="block" for="password">
                         <span class="sr-only">Contraseña</span>
@@ -98,7 +127,7 @@ const togglePassword = () => {
                             </button>
                         </span>
                     </label>
-                    <p v-if="form.errors.password" class="-mt-1 text-xs font-semibold text-rose-100">{{ form.errors.password }}</p>
+                    <p v-if="form.errors.password && !showErrorModal" class="-mt-1 text-xs font-semibold text-rose-100">{{ form.errors.password }}</p>
                 </div>
 
                 <div class="mt-4 flex items-center justify-between gap-3 text-[11px]">
@@ -136,4 +165,21 @@ const togglePassword = () => {
             </form>
         </div>
     </AuthLayout>
+    
+    <DialogModal :show="showErrorModal" boxed box-class="bg-white" white @close="showErrorModal = false">
+        <template #title>
+            <span class="text-lg font-black">Acceso</span>
+        </template>
+
+        <template #content>
+            <p class="text-sm">{{ errorMessage }}</p>
+        </template>
+
+        <template #footer>
+            <div class="flex items-center gap-2">
+                <button type="button" class="rounded-2xl px-4 py-2 text-sm font-black bg-teal-400 text-slate-950" @click="showErrorModal = false">Cerrar</button>
+            </div>
+        </template>
+    </DialogModal>
+
 </template>

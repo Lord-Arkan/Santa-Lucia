@@ -43,6 +43,7 @@ class UserManagementController extends Controller
             'rol' => $user->rol,
             'profile_photo_path' => $user->profile_photo_path,
             'profile_photo_url' => $user->profile_photo_url,
+            'status' => $user->status ?? true,
             'created_at' => $user->created_at?->format('d/m/Y'),
         ]);
 
@@ -104,6 +105,17 @@ class UserManagementController extends Controller
         $user->delete();
 
         return back()->with('status', 'Usuario eliminado correctamente.');
+    }
+
+    public function toggleStatus(Request $request, User $user): RedirectResponse
+    {
+        // Toggle boolean status
+        $user->status = ! ($user->status ?? true);
+        $user->save();
+
+        $message = $user->status ? 'Usuario habilitado correctamente.' : 'Usuario inhabilitado correctamente.';
+
+        return back()->with('status', $message);
     }
 
     /**
