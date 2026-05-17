@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
     {
         $users = [
             [
-                'name' => 'Administrador Santa Lucia',
+                'name' => 'Administrador',
                 'email' => 'admin@santalucia.test',
                 'rol' => 'administrador',
             ],
@@ -43,8 +43,8 @@ class DatabaseSeeder extends Seeder
                 'rol' => 'jefe_area',
             ],
             [
-                'name' => 'Test User',
-                'email' => 'test@example.com',
+                'name' => 'Franklik Lopez',
+                'email' => 'franklin@example.com',
                 'rol' => 'administrador',
             ],
         ];
