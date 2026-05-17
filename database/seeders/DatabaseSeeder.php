@@ -60,5 +60,8 @@ class DatabaseSeeder extends Seeder
                 ],
             );
         }
+
+        // Seed specialties
+        $this->call([\Database\Seeders\SpecialtySeeder::class]);
     }
 }
