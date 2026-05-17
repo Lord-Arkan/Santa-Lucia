@@ -20,17 +20,17 @@ const emit = defineEmits(['close']);
 const dialog = ref();
 const showSlot = ref(props.show);
 
-watch(() => props.show, () => {
-    if (props.show) {
-        document.body.style.overflow = 'hidden';
+watch(() => props.show, (val) => {
+    if (val) {
+        // show immediately and lock body scroll
         showSlot.value = true;
-        dialog.value?.showModal();
+        document.body.style.overflow = 'hidden';
     } else {
-        document.body.style.overflow = null;
+        // wait for transition before removing from DOM and restore scroll
         setTimeout(() => {
-            dialog.value?.close();
             showSlot.value = false;
-        }, 200);
+            document.body.style.overflow = null;
+        }, 250);
     }
 });
 
@@ -69,8 +69,8 @@ const maxWidthClass = computed(() => {
 </script>
 
 <template>
-    <dialog class="z-50 m-0 min-h-full min-w-full overflow-y-auto bg-transparent backdrop:bg-transparent" ref="dialog">
-        <div class="fixed inset-0 overflow-y-auto px-4 py-6 sm:px-0 z-50" scroll-region>
+    <div v-show="show" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen text-center sm:block sm:p-0">
             <transition
                 enter-active-class="ease-out duration-300"
                 enter-from-class="opacity-0"
@@ -79,10 +79,11 @@ const maxWidthClass = computed(() => {
                 leave-from-class="opacity-100"
                 leave-to-class="opacity-0"
             >
-                <div v-show="show" class="fixed inset-0 transform transition-all" @click="close">
-                    <div class="absolute inset-0 bg-gray-500 opacity-75" />
-                </div>
+                <div v-show="show" class="fixed inset-0 bg-black/50" @click="close" />
             </transition>
+
+            <!-- This element is to trick the browser into centering the modal contents. -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
             <transition
                 enter-active-class="ease-out duration-300"
@@ -92,10 +93,10 @@ const maxWidthClass = computed(() => {
                 leave-from-class="opacity-100 translate-y-0 sm:scale-100"
                 leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-                <div v-show="show" class="mb-6 bg-transparent rounded-lg overflow-hidden shadow-none transform transition-all sm:w-full sm:mx-auto" :class="maxWidthClass">
-                    <slot v-if="showSlot"/>
+                <div v-show="show" ref="dialog" class="inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:align-middle sm:w-full" :class="maxWidthClass" @click.stop>
+                    <slot v-if="showSlot" />
                 </div>
             </transition>
         </div>
-    </dialog>
+    </div>
 </template>

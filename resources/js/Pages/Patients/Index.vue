@@ -1,20 +1,16 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, reactive } from 'vue';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import DashboardLayout from '@/Layouts/DashboardLayout.vue';
-import UserForm from '@/Components/users/UserForm.vue';
-import UserTable from '@/Components/users/UserTable.vue';
+import PatientForm from '@/Components/patients/PatientForm.vue';
+import PatientTable from '@/Components/patients/PatientTable.vue';
 import DialogModal from '@/Components/DialogModal.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
-import { userService } from '@/services/userService';
+import { patientService } from '@/services/patientService';
 
 const props = defineProps({
-    users: {
+    patients: {
         type: Object,
-        required: true,
-    },
-    roles: {
-        type: Array,
         required: true,
     },
 });
@@ -22,24 +18,27 @@ const props = defineProps({
 const page = usePage();
 const showFilters = ref(false);
 const filters = ref({
-    name: page.props.filters?.name ?? '',
+    first_name: page.props.filters?.first_name ?? '',
+    last_name: page.props.filters?.last_name ?? '',
+    document_number: page.props.filters?.document_number ?? '',
     email: page.props.filters?.email ?? '',
-    rol: page.props.filters?.rol ?? '',
 });
 
 const applyFilters = () => {
-    router.get(route('users.index'), {
-        name: filters.value.name || undefined,
+    router.get(route('patients.index'), {
+        first_name: filters.value.first_name || undefined,
+        last_name: filters.value.last_name || undefined,
+        document_number: filters.value.document_number || undefined,
         email: filters.value.email || undefined,
-        rol: filters.value.rol || undefined,
     }, { preserveState: true, replace: true });
 };
 
 const clearFilters = () => {
-    filters.value.name = '';
+    filters.value.first_name = '';
+    filters.value.last_name = '';
+    filters.value.document_number = '';
     filters.value.email = '';
-    filters.value.rol = '';
-    router.get(route('users.index'), {}, { preserveState: true, replace: true });
+    router.get(route('patients.index'), {}, { preserveState: true, replace: true });
 };
 
 const goTo = (url) => {
@@ -51,57 +50,58 @@ const translateLabel = (label) => {
     if (!label) return '';
     return String(label).replace(/Previous/g, 'Anterior').replace(/Next/g, 'Siguiente');
 };
-const editingUser = ref(null);
+
+const editingPatient = ref(null);
 const showModal = ref(false);
 const status = computed(() => page.props.flash?.status ?? '');
-const currentUserId = computed(() => page.props.auth?.user?.id ?? null);
 
-const form = useForm(userService.defaultForm());
+const form = useForm(patientService.defaultForm());
 
 const resetForm = () => {
-    editingUser.value = null;
+    editingPatient.value = null;
     form.reset();
     form.clearErrors();
-    form.rol = 'asistente';
-    form.image = null;
     showModal.value = false;
 };
 
-const editUser = (user) => {
-    editingUser.value = user;
+const editPatient = (patient) => {
+    editingPatient.value = patient;
     form.clearErrors();
-    form.name = user.name;
-    form.email = user.email;
-    form.rol = user.rol;
-    form.password = '';
-    form.password_confirmation = '';
-    form.image = null;
+    form.document_type = patient.document_type;
+    form.document_number = patient.document_number;
+    form.first_name = patient.first_name;
+    form.last_name = patient.last_name;
+    form.birth_date = patient.birth_date;
+    form.gender = patient.gender;
+    form.phone = patient.phone;
+    form.email = patient.email;
+    form.address = patient.address;
+    form.blood_type = patient.blood_type;
+    form.allergies = patient.allergies;
+    form.previous_conditions = patient.previous_conditions;
+    form.insurance_type = patient.insurance_type;
+    form.status = patient.status ?? 'activo';
     showModal.value = true;
 };
 
 const openCreate = () => {
-    editingUser.value = null;
+    editingPatient.value = null;
     form.reset();
     form.clearErrors();
-    form.rol = 'asistente';
-    form.image = null;
+    form.status = 'activo';
     showModal.value = true;
 };
 
 const submit = () => {
     const options = {
         preserveScroll: true,
-        forceFormData: true,
         onSuccess: resetForm,
     };
 
-    if (editingUser.value) {
+    if (editingPatient.value) {
         form
-            .transform((data) => ({
-                ...data,
-                _method: 'put',
-            }))
-            .post(route('users.update', editingUser.value.id), {
+            .transform((data) => ({ ...data, _method: 'put' }))
+            .post(route('patients.update', editingPatient.value.patient_id), {
                 ...options,
                 onFinish: () => form.transform((data) => data),
             });
@@ -109,41 +109,59 @@ const submit = () => {
         return;
     }
 
-    form.transform((data) => data).post(route('users.store'), options);
+    form.post(route('patients.store'), options);
 };
 
-const confirmState = ref({
-    show: false,
-    title: '',
-    message: '',
-    confirmText: 'Confirmar',
-    cancelText: 'Cancelar',
-    danger: false,
-    maxWidth: 'sm',
-    onConfirm: null,
-});
-
-const openConfirm = ({ title, message, confirmText = 'Confirmar', cancelText = 'Cancelar', danger = false, maxWidth = 'sm', onConfirm = null }) => {
-    confirmState.value = { show: true, title, message, confirmText, cancelText, danger, maxWidth, onConfirm };
-};
-
-const deleteUser = (user) => {
-    if (user.id === currentUserId.value) return;
-
+const deletePatient = (patient) => {
     openConfirm({
-        title: 'Eliminar usuario',
-        message: `Eliminar a ${user.name}?`,
+        title: 'Eliminar paciente',
+        message: `¿Eliminar a ${patient.first_name} ${patient.last_name}? Esta acción no se puede deshacer.`,
         confirmText: 'Eliminar',
         cancelText: 'Cancelar',
         danger: true,
-        maxWidth: 'sm',
-        onConfirm: () => router.delete(route('users.destroy', user.id), { preserveScroll: true }),
+        onConfirm: () => router.delete(route('patients.destroy', patient.patient_id), { preserveScroll: true }),
+    });
+};
+
+const confirmState = reactive({
+    show: false,
+    title: '',
+    message: '',
+    confirmText: 'Aceptar',
+    cancelText: 'Cancelar',
+    onConfirm: null,
+    danger: false,
+    maxWidth: 'sm',
+});
+
+const openConfirm = ({ title, message, confirmText = 'Aceptar', cancelText = 'Cancelar', onConfirm = null, danger = false, maxWidth = 'sm' }) => {
+    confirmState.title = title;
+    confirmState.message = message;
+    confirmState.confirmText = confirmText;
+    confirmState.cancelText = cancelText;
+    confirmState.onConfirm = onConfirm;
+    confirmState.danger = danger;
+    confirmState.maxWidth = maxWidth;
+    confirmState.show = true;
+};
+
+const togglePatientStatus = (patient) => {
+    const action = patient.status === 'activo' ? 'Inhabilitar' : 'Habilitar';
+    const danger = patient.status === 'activo';
+
+    openConfirm({
+        title: `${action} paciente`,
+        message: `${action} a ${patient.first_name} ${patient.last_name}?`,
+        confirmText: action,
+        cancelText: 'Cancelar',
+        danger,
+        onConfirm: () => router.patch(route('patients.toggleStatus', patient.patient_id), {}, { preserveScroll: true }),
     });
 };
 </script>
 
 <template>
-    <Head title="Usuarios" />
+    <Head title="Pacientes" />
 
     <DashboardLayout>
         <div v-if="status" class="mb-5 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm font-bold text-emerald-200">
@@ -177,19 +195,16 @@ const deleteUser = (user) => {
                 <div v-show="showFilters" class="rounded-2xl border border-white/10 bg-[#0f1c27] p-4">
                     <form class="grid gap-3 sm:grid-cols-4" @submit.prevent="applyFilters">
                         <div>
-                            <label class="block text-xs font-bold text-slate-400">Nombre</label>
-                            <input v-model="filters.name" type="text" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none" placeholder="Nombre" />
+                            <label class="block text-xs font-bold text-slate-400">Nombres</label>
+                            <input v-model="filters.first_name" type="text" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none" placeholder="Nombres" />
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-400">Correo</label>
-                            <input v-model="filters.email" type="text" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none" placeholder="Correo" />
+                            <label class="block text-xs font-bold text-slate-400">Apellidos</label>
+                            <input v-model="filters.last_name" type="text" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none" placeholder="Apellidos" />
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-400">Rol</label>
-                            <select v-model="filters.rol" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-[#101824] px-3 text-sm text-white outline-none">
-                                <option value="">Todos</option>
-                                <option v-for="role in props.roles" :key="role.value" :value="role.value">{{ role.label }}</option>
-                            </select>
+                            <label class="block text-xs font-bold text-slate-400">Documento</label>
+                            <input v-model="filters.document_number" type="text" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none" placeholder="Documento" />
                         </div>
                         <div class="flex items-end gap-2">
                             <button type="submit" class="h-10 rounded-2xl bg-teal-400/80 px-4 text-sm font-black text-slate-950">Aplicar</button>
@@ -199,18 +214,18 @@ const deleteUser = (user) => {
                 </div>
             </transition>
 
-            <UserTable
-                :users="props.users.data"
-                :current-user-id="currentUserId"
-                @edit="editUser"
-                @delete="deleteUser"
+            <PatientTable
+                :patients="props.patients.data"
+                @edit="editPatient"
+                @delete="deletePatient"
+                @toggle="togglePatientStatus"
             />
 
-            <div v-if="props.users.links" class="flex items-center justify-between px-2 py-4">
-                <div class="text-sm text-slate-400">Mostrando {{ props.users.from }} - {{ props.users.to }} de {{ props.users.total }}</div>
+            <div v-if="props.patients.links" class="flex items-center justify-between px-2 py-4">
+                <div class="text-sm text-slate-400">Mostrando {{ props.patients.from }} - {{ props.patients.to }} de {{ props.patients.total }}</div>
                 <div class="flex items-center gap-2">
                     <button
-                        v-for="link in props.users.links"
+                        v-for="link in props.patients.links"
                         :key="link.label + (link.url || '')"
                         v-html="translateLabel(link.label)"
                         :disabled="!link.url"
@@ -223,10 +238,9 @@ const deleteUser = (user) => {
 
             <DialogModal :show="showModal" @close="showModal = false" max-width="2xl">
                 <template #content>
-                    <UserForm
+                    <PatientForm
                         :form="form"
-                        :roles="props.roles"
-                        :editing-user="editingUser"
+                        :editing-patient="editingPatient"
                         @submit="submit"
                         @cancel="resetForm"
                     />

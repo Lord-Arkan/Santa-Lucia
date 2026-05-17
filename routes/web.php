@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\PatientManagementController;
 
 Route::redirect('/', '/login');
 
@@ -14,8 +15,17 @@ Route::middleware([
         return Inertia::render('Dashboard');
     })->name('dashboard');
 
-    Route::resource('usuarios', UserManagementController::class)
+    Route::resource('users', UserManagementController::class)
         ->only(['index', 'store', 'update', 'destroy'])
-        ->parameters(['usuarios' => 'user'])
+        ->parameters(['users' => 'user'])
+        ->middleware('role:administrador,jefe_area');
+
+    Route::patch('patients/{patient}/toggle-status', [PatientManagementController::class, 'toggleStatus'])
+        ->name('patients.toggleStatus')
+        ->middleware('role:administrador,jefe_area');
+
+    Route::resource('patients', PatientManagementController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->parameters(['patients' => 'patient'])
         ->middleware('role:administrador,jefe_area');
 });

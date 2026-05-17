@@ -41,23 +41,13 @@
                         </p>
                     </div>
 
-                    <div class="absolute bottom-20 right-24 h-[430px] w-[320px]">
-                        <div class="absolute left-1/2 top-20 h-64 w-64 -translate-x-1/2 rounded-[42%] bg-gradient-to-br from-amber-300 to-orange-400 shadow-2xl shadow-orange-400/25" />
-                        <div class="absolute left-1/2 top-0 h-28 w-28 -translate-x-1/2 rounded-full bg-[#f3c6a8] shadow-lg" />
-                        <div class="absolute left-[112px] top-[48px] h-5 w-5 rounded-full bg-slate-800" />
-                        <div class="absolute right-[112px] top-[48px] h-5 w-5 rounded-full bg-slate-800" />
-                        <div class="absolute left-1/2 top-[78px] h-3 w-10 -translate-x-1/2 rounded-b-full border-b-4 border-rose-500" />
-                        <div class="absolute left-[82px] top-[12px] h-28 w-40 rounded-t-full bg-slate-800" />
-                        <div class="absolute left-[52px] top-[108px] h-72 w-56 rounded-t-[5rem] bg-white shadow-2xl shadow-teal-950/20" />
-                        <div class="absolute left-[88px] top-[142px] h-40 w-6 rounded-full bg-teal-500" />
-                        <div class="absolute right-[88px] top-[142px] h-40 w-6 rounded-full bg-teal-500" />
-                        <div class="absolute left-[113px] top-[126px] h-56 w-24 rounded-b-[3rem] bg-slate-50" />
-                        <div class="absolute left-[72px] top-[155px] h-28 w-16 rotate-12 rounded-full bg-[#f3c6a8]" />
-                        <div class="absolute right-[72px] top-[155px] h-28 w-16 -rotate-12 rounded-full bg-[#f3c6a8]" />
-                        <div class="absolute left-[86px] top-[232px] h-12 w-12 rounded-full border-[10px] border-teal-600 bg-white" />
-                        <div class="absolute left-[111px] top-[178px] h-20 w-2 rounded-full bg-teal-700" />
-                        <div class="absolute left-[120px] top-[252px] h-2 w-24 rounded-full bg-teal-700" />
-                    </div>
+                    <img
+                        src="/storage/img/pngwing.com.png"
+                        alt="Ilustración clínica"
+                        class="absolute bottom-20 right-24 h-[430px] w-[320px] object-contain"
+                        loading="eager"
+                        decoding="async"
+                    />
 
                     <div class="absolute bottom-24 left-12 rounded-2xl border border-white/80 bg-white/90 px-4 py-3 shadow-xl shadow-teal-900/10 backdrop-blur">
                         <div class="flex items-center gap-3">
