@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useAuth } from '@/composables/useAuth';
 import { authService } from '@/services/authService';
@@ -12,8 +12,12 @@ const props = defineProps({
 });
 
 const { user } = useAuth();
+const isSidebarCollapsed = ref(false);
+const isSettingsOpen = ref(true);
 
 const userLabel = computed(() => user.value?.name ?? 'Usuario');
+const userRole = computed(() => user.value?.rol ?? 'asistente');
+const userPhotoUrl = computed(() => (user.value?.profile_photo_path ? user.value.profile_photo_url : ''));
 const userInitials = computed(() => {
     const name = userLabel.value.trim().split(' ').filter(Boolean);
 
@@ -32,40 +36,84 @@ const navItems = [
     { label: 'Doctores', routeName: 'dashboard', icon: 'M12 2a5 5 0 0 0-5 5v2H5a2 2 0 0 0-2 2v8a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-8a2 2 0 0 0-2-2h-2V7a5 5 0 0 0-5-5Zm-3 7V7a3 3 0 1 1 6 0v2H9Zm2 5h2v2h2v2h-2v2h-2v-2H9v-2h2v-2Z' },
     { label: 'Historial', routeName: 'dashboard', icon: 'M5 3h11l3 3v15H5V3Zm10 0v4h4M8 11h8M8 15h8M8 19h5' },
     { label: 'Reportes', routeName: 'dashboard', icon: 'M5 19V5h14v14H5Zm4-3V9m4 7v-5m4 5v-8' },
-    { label: 'Configuracion', routeName: 'dashboard', icon: 'M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm8.2 4a7.8 7.8 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8 8 0 0 0-1.7-1L15.7 3h-4l-.3 3a8 8 0 0 0-1.7 1L7.3 6l-2 3.5 2 1.5a7.8 7.8 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 1.7 1l.3 3h4l.3-3a8 8 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5c.1-.3.1-.7.1-1Z' },
 ];
+
+const settingsItems = [
+    { label: 'Usuarios', routeName: 'usuarios.index', icon: 'M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-1a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 20a6 6 0 0 1 12 0v1H2v-1Zm12.5 1v-1a7.5 7.5 0 0 0-2.1-5.2A5 5 0 0 1 22 18v3h-7.5Z' },
+];
+
+const isRouteActive = (routeName) => {
+    try {
+        return route().current(routeName);
+    } catch {
+        return false;
+    }
+};
+
+const toggleSidebar = () => {
+    isSidebarCollapsed.value = !isSidebarCollapsed.value;
+};
 
 const logout = () => {
     authService.logout();
 };
+
+onMounted(() => {
+    isSidebarCollapsed.value = window.localStorage.getItem('santa-lucia-sidebar-collapsed') === 'true';
+});
+
+watch(isSidebarCollapsed, (value) => {
+    window.localStorage.setItem('santa-lucia-sidebar-collapsed', String(value));
+});
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-950 text-slate-100 lg:grid lg:grid-cols-[292px_1fr]">
+    <div
+        class="min-h-screen bg-slate-950 text-slate-100 transition-[grid-template-columns] duration-300 lg:grid"
+        :class="isSidebarCollapsed ? 'lg:grid-cols-[88px_1fr]' : 'lg:grid-cols-[292px_1fr]'"
+    >
         <aside class="hidden border-r border-white/10 bg-[#0f1c27] lg:block">
             <div class="flex h-full flex-col">
-                <div class="px-7 pb-6 pt-8">
-                    <div class="flex items-center gap-3">
-                        <div class="grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-cyan-500/20">
-                            <svg viewBox="0 0 48 48" class="size-7 text-white" aria-hidden="true">
-                                <path fill="currentColor" d="M18 6h12v12h12v12H30v12H18V30H6V18h12z" />
+                <div class="px-4 pb-6 pt-8">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex min-w-0 items-center gap-3">
+                            <div class="grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-cyan-500/20">
+                                <svg viewBox="0 0 48 48" class="size-7 text-white" aria-hidden="true">
+                                    <path fill="currentColor" d="M18 6h12v12h12v12H30v12H18V30H6V18h12z" />
+                                </svg>
+                            </div>
+                            <div v-if="!isSidebarCollapsed" class="min-w-0">
+                                <p class="text-xs font-bold uppercase tracking-[0.28em] text-teal-300">Clinica</p>
+                                <p class="truncate text-2xl font-black leading-none text-white">Santa Lucia</p>
+                            </div>
+                        </div>
+
+                        <button
+                            class="grid size-10 shrink-0 place-items-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white"
+                            type="button"
+                            :aria-label="isSidebarCollapsed ? 'Expandir menu' : 'Colapsar menu'"
+                            @click="toggleSidebar"
+                        >
+                            <svg viewBox="0 0 24 24" class="size-5" fill="currentColor" aria-hidden="true">
+                                <path v-if="isSidebarCollapsed" d="m9 5 7 7-7 7-1.4-1.4L13.2 12 7.6 6.4 9 5Z" />
+                                <path v-else d="m15 5 1.4 1.4L10.8 12l5.6 5.6L15 19l-7-7 7-7Z" />
                             </svg>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-[0.28em] text-teal-300">Clinica</p>
-                            <p class="text-2xl font-black leading-none text-white">Santa Lucia</p>
-                        </div>
+                        </button>
                     </div>
                 </div>
 
                 <nav class="min-h-0 flex-1 overflow-y-auto px-4 pb-6" aria-label="Menu principal">
-                    <p class="px-3 text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Menu</p>
+                    <p v-if="!isSidebarCollapsed" class="px-3 text-xs font-bold uppercase tracking-[0.22em] text-slate-500">Menu</p>
                     <ul class="mt-4 space-y-1.5">
-                        <li v-for="(item, index) in navItems" :key="item.label">
+                        <li v-for="item in navItems" :key="item.label">
                             <Link
                                 :href="route(item.routeName)"
-                                class="group flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-bold transition"
-                                :class="index === 0 ? 'bg-teal-400/15 text-white shadow-inner shadow-white/5 ring-1 ring-teal-300/20' : 'text-slate-300 hover:bg-white/10 hover:text-white'"
+                                class="group flex items-center rounded-2xl px-3 py-3 text-sm font-bold transition"
+                                :class="[
+                                    isSidebarCollapsed ? 'justify-center' : 'justify-between',
+                                    isRouteActive(item.routeName) ? 'bg-teal-400/15 text-white shadow-inner shadow-white/5 ring-1 ring-teal-300/20' : 'text-slate-300 hover:bg-white/10 hover:text-white',
+                                ]"
+                                :title="isSidebarCollapsed ? item.label : null"
                             >
                                 <span class="flex items-center gap-3">
                                     <span class="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-400 transition group-hover:text-teal-200">
@@ -73,23 +121,55 @@ const logout = () => {
                                             <path :d="item.icon" />
                                         </svg>
                                     </span>
-                                    {{ item.label }}
+                                    <span v-if="!isSidebarCollapsed">{{ item.label }}</span>
                                 </span>
-                                <svg viewBox="0 0 20 20" class="size-4 text-slate-500" fill="currentColor" aria-hidden="true">
-                                    <path d="M7.5 5.5 12 10l-4.5 4.5 1.1 1.1 5.6-5.6-5.6-5.6-1.1 1.1Z" />
-                                </svg>
                             </Link>
                         </li>
                     </ul>
-                </nav>
 
-                <div class="m-4 rounded-[1.5rem] border border-teal-300/20 bg-gradient-to-br from-teal-500/15 to-cyan-500/10 p-4">
-                    <p class="text-sm font-black text-white">Turnos de hoy</p>
-                    <p class="mt-1 text-xs leading-5 text-slate-400">Vista rapida de agenda, pacientes y equipo medico.</p>
-                    <div class="mt-4 h-2 rounded-full bg-slate-800">
-                        <div class="h-2 w-3/4 rounded-full bg-gradient-to-r from-teal-400 to-cyan-300" />
+                    <div class="mt-7">
+                        <button
+                            class="flex w-full items-center rounded-2xl px-3 py-3 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+                            :class="isSidebarCollapsed ? 'justify-center' : 'justify-between'"
+                            type="button"
+                            title="Configuracion"
+                            @click="isSettingsOpen = !isSettingsOpen"
+                        >
+                            <span class="flex items-center gap-3">
+                                <span class="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-slate-400">
+                                    <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" aria-hidden="true">
+                                        <path d="M12 8a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm8.2 4a7.8 7.8 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a8 8 0 0 0-1.7-1L15.7 3h-4l-.3 3a8 8 0 0 0-1.7 1L7.3 6l-2 3.5 2 1.5a7.8 7.8 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a8 8 0 0 0 1.7 1l.3 3h4l.3-3a8 8 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5c.1-.3.1-.7.1-1Z" />
+                                    </svg>
+                                </span>
+                                <span v-if="!isSidebarCollapsed">Configuracion</span>
+                            </span>
+                            <svg v-if="!isSidebarCollapsed" viewBox="0 0 20 20" class="size-4 text-slate-500 transition" :class="isSettingsOpen ? 'rotate-90' : ''" fill="currentColor" aria-hidden="true">
+                                <path d="M7.5 5.5 12 10l-4.5 4.5 1.1 1.1 5.6-5.6-5.6-5.6-1.1 1.1Z" />
+                            </svg>
+                        </button>
+
+                        <ul v-show="isSettingsOpen" class="mt-2 space-y-1">
+                            <li v-for="item in settingsItems" :key="item.label">
+                                <Link
+                                    :href="route(item.routeName)"
+                                    class="flex items-center rounded-2xl py-2.5 text-sm font-bold transition"
+                                    :class="[
+                                        isSidebarCollapsed ? 'justify-center px-3' : 'gap-3 px-5 pl-14',
+                                        isRouteActive(item.routeName) ? 'bg-cyan-400/15 text-white ring-1 ring-cyan-300/20' : 'text-slate-400 hover:bg-white/10 hover:text-white',
+                                    ]"
+                                    :title="isSidebarCollapsed ? item.label : null"
+                                >
+                                    <span v-if="isSidebarCollapsed" class="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/5">
+                                        <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" aria-hidden="true">
+                                            <path :d="item.icon" />
+                                        </svg>
+                                    </span>
+                                    <span v-else>{{ item.label }}</span>
+                                </Link>
+                            </li>
+                        </ul>
                     </div>
-                </div>
+                </nav>
             </div>
         </aside>
 
@@ -122,8 +202,17 @@ const logout = () => {
                         </div>
 
                         <div class="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-                            <span class="grid size-10 place-items-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-sm font-black text-white">{{ userInitials }}</span>
-                            <span class="min-w-0 text-sm font-bold text-white">{{ userLabel }}</span>
+                            <img
+                                v-if="userPhotoUrl"
+                                :src="userPhotoUrl"
+                                :alt="userLabel"
+                                class="size-10 rounded-full object-cover ring-2 ring-teal-300/30"
+                            >
+                            <span v-else class="grid size-10 place-items-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-sm font-black text-white">{{ userInitials }}</span>
+                            <span class="min-w-0">
+                                <span class="block truncate text-sm font-bold text-white">{{ userLabel }}</span>
+                                <span class="block text-[11px] font-bold uppercase tracking-[0.12em] text-teal-200">{{ userRole }}</span>
+                            </span>
                             <button class="rounded-xl px-3 py-2 text-xs font-bold text-teal-200 transition hover:bg-white/10 hover:text-white" type="button" @click="logout">Logout</button>
                         </div>
                     </div>
@@ -131,11 +220,11 @@ const logout = () => {
 
                 <nav class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label="Menu principal movil">
                     <Link
-                        v-for="(item, index) in navItems"
+                        v-for="item in [...navItems, ...settingsItems]"
                         :key="item.label"
                         :href="route(item.routeName)"
                         class="shrink-0 rounded-2xl border px-4 py-2 text-xs font-black"
-                        :class="index === 0 ? 'border-teal-300/30 bg-teal-400/15 text-white' : 'border-white/10 bg-white/5 text-slate-300'"
+                        :class="isRouteActive(item.routeName) ? 'border-teal-300/30 bg-teal-400/15 text-white' : 'border-white/10 bg-white/5 text-slate-300'"
                     >
                         {{ item.label }}
                     </Link>
