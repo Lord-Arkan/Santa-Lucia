@@ -19,7 +19,7 @@ const schedule = computed(() => props.schedule);
 <template>
     <Head title="Dashboard" />
 
-    <DashboardLayout title="Dashboard">
+    <DashboardLayout>
         <ScheduleBoard
             title="Calendario de Citas Programadas"
             :upcoming-appointments="upcomingAppointments"

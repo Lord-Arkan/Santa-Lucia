@@ -13,8 +13,22 @@ class DashboardController extends Controller
     {
         Carbon::setLocale('es');
 
+        // fecha actual (hoy) usada para KPIs y proximas citas
         $today = Carbon::today();
-        $end = $today->copy()->addDays(5);
+
+        // Permitir navegar a una semana distinta pasando ?start_date=YYYY-MM-DD
+        $startDateParam = $request->input('start_date');
+        if ($startDateParam) {
+            try {
+                $start = Carbon::parse($startDateParam);
+            } catch (\Exception $e) {
+                $start = $today->copy();
+            }
+        } else {
+            $start = $today->copy();
+        }
+
+        $end = $start->copy()->addDays(5);
 
         $overdueCount = Appointment::where('status', 'SCHEDULED')
             ->whereDate('appointment_date', '<', $today->toDateString())
@@ -24,7 +38,8 @@ class DashboardController extends Controller
             ->whereDate('appointment_date', '>=', $today->toDateString())
             ->count();
 
-        $totalWeek = Appointment::whereBetween('appointment_date', [$today->toDateString(), $end->toDateString()])->count();
+        // Conteo relativo a la semana actualmente mostrada (start..end)
+        $totalWeek = Appointment::whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])->count();
 
         $summary = [
             ['id' => 'overdue', 'title' => 'Atrasadas', 'value' => $overdueCount],
@@ -32,8 +47,9 @@ class DashboardController extends Controller
             ['id' => 'week', 'title' => 'Esta semana', 'value' => $totalWeek],
         ];
 
+        // Cargar citas en el rango mostrado (start..end)
         $appointments = Appointment::with('patient')
-            ->whereBetween('appointment_date', [$today->toDateString(), $end->toDateString()])
+            ->whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])
             ->orderBy('appointment_date')
             ->orderBy('start_time')
             ->get();
@@ -51,11 +67,11 @@ class DashboardController extends Controller
                 return "{$date} - {$time} - {$patient}";
             })->toArray();
 
-        // Build schedule grid for next 6 days
+        // Build schedule grid for 6 days starting at $start
         $daysDates = [];
         $days = [];
         for ($i = 0; $i < 6; $i++) {
-            $d = $today->copy()->addDays($i);
+            $d = $start->copy()->addDays($i);
             $daysDates[] = $d;
             $days[] = ucfirst($d->translatedFormat('l'));
         }
@@ -84,6 +100,18 @@ class DashboardController extends Controller
         }
 
         $schedule = ['days' => $days, 'rows' => $rows];
+        // Add a human-readable range label for the displayed week (e.g. "Mayo 16 - Mayo 21")
+        if (count($daysDates) > 0) {
+            $startLabel = ucfirst($daysDates[0]->translatedFormat('F j'));
+            $endLabel = ucfirst($daysDates[count($daysDates) - 1]->translatedFormat('F j'));
+            $schedule['rangeLabel'] = "{$startLabel} - {$endLabel}";
+            $schedule['start_date'] = $daysDates[0]->format('Y-m-d');
+            $schedule['end_date'] = $daysDates[count($daysDates) - 1]->format('Y-m-d');
+        } else {
+            $schedule['rangeLabel'] = '';
+            $schedule['start_date'] = null;
+            $schedule['end_date'] = null;
+        }
 
         return Inertia::render('Dashboard', [
             'summary' => $summary,

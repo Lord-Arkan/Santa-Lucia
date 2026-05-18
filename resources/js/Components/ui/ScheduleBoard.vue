@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { router } from '@inertiajs/vue3';
 
 const props = defineProps({
     title: {
@@ -43,6 +44,26 @@ const calendarDays = computed(() => props.schedule.days.map((day, dayIndex) => {
 
 const totalAppointments = computed(() => calendarDays.value.reduce((total, day) => total + day.appointments.length, 0));
 const busiestDay = computed(() => calendarDays.value.reduce((current, day) => (day.appointments.length > current.appointments.length ? day : current), calendarDays.value[0]));
+
+// Navigation helpers: compute previous/next week based on schedule.start_date
+const scheduleStartIso = computed(() => props.schedule?.start_date ?? null);
+const prevStartIso = computed(() => {
+    if (!scheduleStartIso.value) return null;
+    const d = new Date(scheduleStartIso.value + 'T00:00:00');
+    d.setDate(d.getDate() - 7);
+    return d.toISOString().slice(0, 10);
+});
+const nextStartIso = computed(() => {
+    if (!scheduleStartIso.value) return null;
+    const d = new Date(scheduleStartIso.value + 'T00:00:00');
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().slice(0, 10);
+});
+
+const goToWeek = (iso) => {
+    if (!iso) return;
+    router.get(route('dashboard'), { start_date: iso }, { preserveState: true, replace: true });
+};
 </script>
 
 <template>
@@ -51,18 +72,29 @@ const busiestDay = computed(() => calendarDays.value.reduce((current, day) => (d
             <div class="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
                 <div>
                     <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">Agenda principal</p>
-                    <h2 class="mt-2 text-3xl font-black text-white">{{ title }}</h2>
-                    <p class="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-                        Vista semanal limpia para controlar disponibilidad, pacientes y citas activas.
-                    </p>
+                    <h5 class="mt-2 text-3xl font-black text-white">{{ title }}</h5>
+                   
                 </div>
 
-                <div class="flex flex-wrap gap-3">
-                    <button class="rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white" type="button">
-                        Semana
+                <div class="flex flex-wrap gap-3 items-center">
+                    <button
+                        class="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+                        type="button"
+                        :disabled="!prevStartIso"
+                        @click.prevent="goToWeek(prevStartIso)">
+                        ‹
                     </button>
-                    <button class="rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-400 px-4 py-2.5 text-sm font-black text-slate-950 shadow-lg shadow-cyan-500/20" type="button">
-                        Mayo 16 - Mayo 21
+
+                    <div class="rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-400 px-4 py-2.5 text-sm font-black text-slate-950 shadow-lg shadow-cyan-500/20">
+                        {{ schedule.rangeLabel }}
+                    </div>
+
+                    <button
+                        class="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+                        type="button"
+                        :disabled="!nextStartIso"
+                        @click.prevent="goToWeek(nextStartIso)">
+                        ›
                     </button>
                 </div>
             </div>
@@ -111,13 +143,13 @@ const busiestDay = computed(() => calendarDays.value.reduce((current, day) => (d
                 <div class="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
                     <p class="text-sm font-black text-white">Resumen semanal</p>
                     <div class="mt-5 grid grid-cols-2 gap-3">
-                        <div class="rounded-2xl bg-teal-400/10 p-4">
-                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Total</p>
-                            <p class="mt-2 text-3xl font-black text-white">{{ totalAppointments }}</p>
-                        </div>
+                                    <div class="rounded-2xl bg-teal-400/10 p-4 text-center">
+                                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Total</p>
+                                        <p class="mt-2 text-xl font-black text-white">{{ totalAppointments }}</p>
+                                    </div>
                         <div class="rounded-2xl bg-cyan-400/10 p-4">
-                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-cyan-300">Mayor carga</p>
-                            <p class="mt-2 text-3xl font-black text-white">{{ busiestDay.day }}</p>
+                               <p class="text-xs font-bold uppercase tracking-[0.16em] text-cyan-300">Mayor carga</p>
+                               <p class="mt-2 text-xl font-black text-white text-center">{{ busiestDay.day }}</p>
                         </div>
                     </div>
                 </div>

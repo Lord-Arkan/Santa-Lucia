@@ -17,6 +17,9 @@ const props = defineProps({
 
 const page = usePage();
 const showFilters = ref(false);
+const filters = ref({
+    doctor_id: page.props.filters?.doctor_id ?? '',
+});
 const currentUser = computed(() => page.props.auth?.user ?? null);
 const isDoctor = computed(() => currentUser.value && currentUser.value.rol === 'doctor');
 const myDoctor = computed(() => page.props.my_doctor ?? null);
@@ -99,6 +102,17 @@ const goTo = (url) => {
     if (!url) return;
     router.get(url, {}, { preserveState: true, replace: true });
 };
+
+const applyFilters = () => {
+    router.get(route('appointments.index'), {
+        doctor_id: filters.value.doctor_id || undefined,
+    }, { preserveState: true, replace: true });
+};
+
+const clearFilters = () => {
+    filters.value.doctor_id = '';
+    router.get(route('appointments.index'), {}, { preserveState: true, replace: true });
+};
 </script>
 
 <template>
@@ -120,13 +134,18 @@ const goTo = (url) => {
 
             <transition name="fade">
                 <div v-show="showFilters" class="rounded-2xl border border-white/10 bg-[#0f1c27] p-4">
-                    <form class="grid gap-3 sm:grid-cols-4">
+                    <form class="grid gap-3 sm:grid-cols-4" @submit.prevent="applyFilters">
                         <div>
                             <label class="block text-xs font-bold text-slate-400">Doctor</label>
-                            <select class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none">
+                            <select v-model="filters.doctor_id" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-[#101824] px-3 text-sm text-white outline-none">
                                 <option value="">Todos</option>
                                 <option v-for="d in props.doctors" :key="d.doctor_id" :value="d.doctor_id">{{ d.name }}</option>
                             </select>
+                        </div>
+
+                        <div class="flex items-end gap-2 sm:col-span-2">
+                            <button type="submit" class="h-10 rounded-2xl bg-teal-400/80 px-4 text-sm font-black text-slate-950">Aplicar</button>
+                            <button type="button" @click="clearFilters" class="h-10 rounded-2xl border border-white/10 px-4 text-sm font-black text-slate-300">Limpiar</button>
                         </div>
                     </form>
                 </div>
