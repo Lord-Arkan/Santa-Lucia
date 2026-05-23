@@ -4,6 +4,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { useAuth } from '@/composables/useAuth';
 import { authService } from '@/services/authService';
 import Dropdown from '@/Components/Dropdown.vue';
+import Banner from '@/Components/Banner.vue';
 
 const props = defineProps({
     title: {
@@ -295,6 +296,9 @@ watch(isSettingsOpen, (value) => {
                     </Link>
                 </nav>
             </header>
+
+            <!-- Global toast / banner -->
+            <Banner />
 
             <main class="px-4 py-6 sm:px-6 lg:px-8">
                 <slot />

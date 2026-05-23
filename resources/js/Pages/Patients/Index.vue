@@ -170,9 +170,7 @@ const togglePatientStatus = (patient) => {
     <Head title="Pacientes" />
 
     <DashboardLayout>
-        <div v-if="status" class="mb-5 rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-sm font-bold text-emerald-200">
-            {{ status }}
-        </div>
+        <!-- status flash moved to global toast Banner component -->
 
         <div class="grid gap-6">
             <div class="flex items-center justify-between">
