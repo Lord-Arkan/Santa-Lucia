@@ -23,9 +23,7 @@ let fpInstance = null;
     await nextTick();
 
     try {
-        // Use a variable module name to avoid Vite static resolution when package isn't installed
-        const moduleName = 'flatpickr';
-        const fpModule = await import(moduleName);
+        const fpModule = await import('flatpickr');
         const flatpickr = fpModule.default ?? fpModule;
 
         // Inject a modern theme (airbnb) from CDN at runtime
@@ -39,7 +37,7 @@ let fpInstance = null;
 
         // try to localize to Spanish if available
         try {
-            const localeModule = await import(moduleName + '/dist/l10n/es.js');
+            const localeModule = await import('flatpickr/dist/l10n/es.js');
             const esLocale = localeModule.default?.es ?? localeModule.es ?? localeModule.default ?? localeModule;
             if (esLocale && typeof flatpickr.localize === 'function') {
                 flatpickr.localize(esLocale);
