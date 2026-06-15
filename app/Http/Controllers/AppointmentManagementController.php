@@ -101,9 +101,9 @@ class AppointmentManagementController extends Controller
         return Inertia::render('Appointments/Index', [
             'appointments' => $appointments,
             'filters' => $request->only(['doctor_id', 'patient_id', 'status', 'appointment_date']),
-            'doctors' => Doctor::query()->with('user')->get()->map(fn ($d) => ['doctor_id' => $d->doctor_id, 'name' => $d->user?->name]),
-            'patients' => $this->access->constrainPatients(Patient::query(), $user)->get()->map(fn ($p) => ['patient_id' => $p->patient_id, 'name' => ($p->first_name . ' ' . $p->last_name)]),
-            'services' => Service::query()->with('specialties','doctors')->get()->map(fn ($s) => [
+            'doctors' => $this->activeDoctors()->get()->map(fn ($d) => ['doctor_id' => $d->doctor_id, 'name' => $d->user?->name]),
+            'patients' => $this->access->constrainPatients(Patient::query()->where('status', 'activo'), $user)->get()->map(fn ($p) => ['patient_id' => $p->patient_id, 'name' => ($p->first_name . ' ' . $p->last_name)]),
+            'services' => $this->availableServices()->map(fn ($s) => [
                 'service_id' => $s->service_id,
                 'name' => $s->name,
                 'duration_minutes' => $s->duration_minutes,
@@ -128,9 +128,9 @@ class AppointmentManagementController extends Controller
         }
 
         return Inertia::render('Appointments/Create', [
-            'doctors' => Doctor::query()->with('user')->get()->map(fn ($d) => ['doctor_id' => $d->doctor_id, 'name' => $d->user?->name, 'specialty_id' => $d->specialty_id]),
-            'patients' => $this->access->constrainPatients(Patient::query(), $user)->get()->map(fn ($p) => ['patient_id' => $p->patient_id, 'name' => ($p->first_name . ' ' . $p->last_name)]),
-            'services' => Service::query()->with('specialties','doctors')->get()->map(fn ($s) => [
+            'doctors' => $this->activeDoctors()->get()->map(fn ($d) => ['doctor_id' => $d->doctor_id, 'name' => $d->user?->name, 'specialty_id' => $d->specialty_id]),
+            'patients' => $this->access->constrainPatients(Patient::query()->where('status', 'activo'), $user)->get()->map(fn ($p) => ['patient_id' => $p->patient_id, 'name' => ($p->first_name . ' ' . $p->last_name)]),
+            'services' => $this->availableServices()->map(fn ($s) => [
                 'service_id' => $s->service_id,
                 'name' => $s->name,
                 'duration_minutes' => $s->duration_minutes,
@@ -158,10 +158,9 @@ class AppointmentManagementController extends Controller
             'allergies' => ['nullable', 'string'],
             'previous_conditions' => ['nullable', 'string'],
             'insurance_type' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', Rule::in(['activo', 'inactivo'])],
         ]);
 
-        $patient = Patient::query()->create(array_merge($data, ['status' => $data['status'] ?? 'activo']));
+        $patient = Patient::query()->create([...$data, 'status' => 'activo']);
 
         return response()->json(['patient' => ['patient_id' => $patient->patient_id, 'name' => $patient->first_name . ' ' . $patient->last_name]], 201);
     }
@@ -184,8 +183,18 @@ class AppointmentManagementController extends Controller
             $validated['doctor_id'] = $doctorId;
         }
 
+        if (! $this->activeDoctors()->where('doctor_id', $validated['doctor_id'])->exists()) {
+            return back()->withErrors(['doctor_id' => 'El doctor seleccionado no esta activo o no tiene horarios activos.']);
+        }
+
         // Calculate end_time based on service duration
-        $service = Service::query()->find($validated['service_id']);
+        $service = Service::query()->where('status', 'activo')->findOrFail($validated['service_id']);
+        $assignedDoctorIds = $service->doctors()->pluck('doctors.doctor_id');
+
+        if ($assignedDoctorIds->isNotEmpty() && ! $assignedDoctorIds->contains((int) $validated['doctor_id'])) {
+            return back()->withErrors(['doctor_id' => 'El doctor seleccionado no esta asignado a este servicio.']);
+        }
+
         $duration = $service ? (int) $service->duration_minutes : 30;
 
         $start = Carbon::createFromFormat('H:i', $validated['start_time']);
@@ -231,15 +240,26 @@ class AppointmentManagementController extends Controller
             return response()->json(['slots' => []]);
         }
 
-        $service = Service::query()->with('doctors')->find($serviceId);
-        $duration = $service ? (int) $service->duration_minutes : 30;
+        $service = $this->activeServices()->find($serviceId);
+        if (! $service || ($service->doctors_count > 0 && $service->doctors->isEmpty())) {
+            return response()->json(['slots' => []]);
+        }
+
+        $duration = (int) $service->duration_minutes;
 
         $dayOfWeek = strtoupper(Carbon::parse($date)->format('l'));
         $dateIso = Carbon::parse($date)->format('Y-m-d');
 
         // Resolve which doctors to consider
         if ($doctorId !== null && $doctorId !== '') {
-            $doctorIds = [(int) $doctorId];
+            $doctorIds = $this->activeDoctors()
+                ->where('doctor_id', (int) $doctorId)
+                ->pluck('doctor_id')
+                ->all();
+
+            if ($service->doctors_count > 0 && ! $service->doctors->pluck('doctor_id')->contains((int) $doctorId)) {
+                $doctorIds = [];
+            }
         } elseif ($service) {
             $doctorIds = $service->doctors->pluck('doctor_id')->toArray();
         } else {
@@ -347,6 +367,37 @@ class AppointmentManagementController extends Controller
         sort($slots);
 
         return response()->json(['slots' => $slots]);
+    }
+
+    private function activeDoctors()
+    {
+        return Doctor::query()
+            ->with('user')
+            ->where('status', 'activo')
+            ->whereHas('user', fn ($query) => $query->where('status', true))
+            ->whereHas('schedules', fn ($query) => $query->where('status', 'activo'));
+    }
+
+    private function activeServices()
+    {
+        return Service::query()
+            ->where('status', 'activo')
+            ->withCount('doctors')
+            ->with([
+                'specialties',
+                'doctors' => fn ($query) => $query
+                    ->where('doctors.status', 'activo')
+                    ->whereHas('user', fn ($users) => $users->where('status', true))
+                    ->whereHas('schedules', fn ($schedules) => $schedules->where('status', 'activo')),
+            ]);
+    }
+
+    private function availableServices()
+    {
+        return $this->activeServices()
+            ->get()
+            ->filter(fn (Service $service) => $service->doctors_count === 0 || $service->doctors->isNotEmpty())
+            ->values();
     }
 
     public function updateStatus(UpdateAppointmentStatusRequest $request, Appointment $appointment): RedirectResponse
