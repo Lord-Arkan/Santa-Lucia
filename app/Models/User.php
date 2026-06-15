@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Support\ModuleCatalog;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -31,6 +32,7 @@ class User extends Authenticatable
         'name',
         'email',
         'rol',
+        'module_permissions',
         'password',
         'profile_photo_path',
         'status',
@@ -68,6 +70,14 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'status' => 'boolean',
+            'module_permissions' => 'array',
         ];
+    }
+
+    public function hasModuleAccess(string $module): bool
+    {
+        $permissions = $this->module_permissions ?? ModuleCatalog::defaultsForRole($this->rol);
+
+        return in_array($module, $permissions, true);
     }
 }

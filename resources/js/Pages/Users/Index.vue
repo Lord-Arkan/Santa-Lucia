@@ -17,6 +17,14 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    modules: {
+        type: Array,
+        required: true,
+    },
+    moduleDefaults: {
+        type: Object,
+        required: true,
+    },
 });
 
 const page = usePage();
@@ -62,13 +70,14 @@ const showModal = ref(false);
 const status = computed(() => page.props.flash?.status ?? '');
 const currentUserId = computed(() => page.props.auth?.user?.id ?? null);
 
-const form = useForm(userService.defaultForm());
+const form = useForm(userService.defaultForm(props.moduleDefaults.asistente));
 
 const resetForm = () => {
     editingUser.value = null;
     form.reset();
     form.clearErrors();
     form.rol = 'asistente';
+    form.module_permissions = [...props.moduleDefaults.asistente];
     form.image = null;
     showModal.value = false;
 };
@@ -79,6 +88,7 @@ const editUser = (user) => {
     form.name = user.name;
     form.email = user.email;
     form.rol = user.rol;
+    form.module_permissions = [...user.module_permissions];
     form.password = '';
     form.password_confirmation = '';
     form.image = null;
@@ -90,6 +100,7 @@ const openCreate = () => {
     form.reset();
     form.clearErrors();
     form.rol = 'asistente';
+    form.module_permissions = [...props.moduleDefaults.asistente];
     form.image = null;
     showModal.value = true;
 };
@@ -245,6 +256,7 @@ const toggleUserStatus = (user) => {
                     <UserForm
                         :form="form"
                         :roles="props.roles"
+                        :modules="props.modules"
                         :editing-user="editingUser"
                         @submit="submit"
                         @cancel="resetForm"

@@ -9,7 +9,7 @@ class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return in_array($this->user()?->rol, ['administrador', 'jefe_area'], true);
+        return $this->user()?->hasModuleAccess('configuration') ?? false;
     }
 
     /**
@@ -24,6 +24,8 @@ class UpdateUserRequest extends FormRequest
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'rol' => ['required', Rule::in(['administrador', 'asistente', 'doctor', 'contador', 'jefe_area'])],
+            'module_permissions' => ['sometimes', 'array'],
+            'module_permissions.*' => ['string', Rule::in(\App\Support\ModuleCatalog::keys())],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         ];
     }

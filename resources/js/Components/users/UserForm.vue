@@ -10,6 +10,10 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    modules: {
+        type: Array,
+        required: true,
+    },
     editingUser: {
         type: Object,
         default: null,
@@ -82,6 +86,31 @@ watch(() => props.editingUser, () => {
                 </select>
                 <span v-if="form.errors.rol" class="mt-1 block text-xs font-bold text-rose-300">{{ form.errors.rol }}</span>
             </label>
+
+            <fieldset>
+                <legend class="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">Acceso por modulos</legend>
+                <p class="mt-2 text-xs font-medium text-slate-500">Los modulos no seleccionados se ocultaran y no seran accesibles.</p>
+
+                <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                    <label
+                        v-for="module in modules"
+                        :key="module.value"
+                        class="flex cursor-pointer gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 transition hover:border-teal-300/40 hover:bg-white/10"
+                    >
+                        <input
+                            v-model="form.module_permissions"
+                            type="checkbox"
+                            :value="module.value"
+                            class="mt-1 size-4 rounded border-white/20 bg-[#101824] text-teal-400 focus:ring-teal-400/30"
+                        >
+                        <span>
+                            <span class="block text-sm font-bold text-white">{{ module.label }}</span>
+                            <span class="mt-1 block text-xs font-medium text-slate-500">{{ module.description }}</span>
+                        </span>
+                    </label>
+                </div>
+                <span v-if="form.errors.module_permissions" class="mt-2 block text-xs font-bold text-rose-300">{{ form.errors.module_permissions }}</span>
+            </fieldset>
 
             <div class="grid gap-4 sm:grid-cols-2">
                 <label class="block">

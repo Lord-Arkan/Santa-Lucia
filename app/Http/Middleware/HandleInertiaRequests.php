@@ -45,6 +45,8 @@ class HandleInertiaRequests extends Middleware
                         'name' => $request->user()->name,
                         'email' => $request->user()->email,
                         'rol' => $request->user()->rol,
+                        'module_permissions' => $request->user()->module_permissions
+                            ?? \App\Support\ModuleCatalog::defaultsForRole($request->user()->rol),
                         'profile_photo_path' => $request->user()->profile_photo_path,
                         'profile_photo_url' => $request->user()->profile_photo_url,
                     ]

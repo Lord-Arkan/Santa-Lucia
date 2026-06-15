@@ -1,11 +1,12 @@
 export const userService = {
-    defaultForm() {
+    defaultForm(modulePermissions = []) {
         return {
             name: '',
             email: '',
             password: '',
             password_confirmation: '',
             rol: 'asistente',
+            module_permissions: [...modulePermissions],
             image: null,
         };
     },

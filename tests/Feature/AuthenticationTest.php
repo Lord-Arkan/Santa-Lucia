@@ -41,4 +41,18 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
     }
+
+    public function test_user_is_redirected_to_first_accessible_module_after_login(): void
+    {
+        $user = User::factory()->create([
+            'module_permissions' => ['reports'],
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('reports.index', absolute: false));
+    }
 }

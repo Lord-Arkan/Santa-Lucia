@@ -9,6 +9,7 @@ use App\Models\Doctor;
 use App\Models\Specialty;
 use Illuminate\Http\Request;
 use App\Services\UserProfileImageService;
+use App\Support\ModuleCatalog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
@@ -43,6 +44,7 @@ class UserManagementController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'rol' => $user->rol,
+            'module_permissions' => $user->module_permissions ?? ModuleCatalog::defaultsForRole($user->rol),
             'profile_photo_path' => $user->profile_photo_path,
             'profile_photo_url' => $user->profile_photo_url,
             'status' => $user->status ?? true,
@@ -52,6 +54,9 @@ class UserManagementController extends Controller
         return Inertia::render('Users/Index', [
             'users' => $users,
             'roles' => $this->roles(),
+            'modules' => ModuleCatalog::options(),
+            'moduleDefaults' => collect($this->roles())
+                ->mapWithKeys(fn (array $role) => [$role['value'] => ModuleCatalog::defaultsForRole($role['value'])]),
             'filters' => $request->only(['name', 'email', 'rol']),
         ]);
     }
@@ -65,6 +70,7 @@ class UserManagementController extends Controller
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'rol' => $validated['rol'],
+            'module_permissions' => array_values(array_unique($validated['module_permissions'] ?? [])),
         ]);
 
         if ($request->hasFile('image')) {
@@ -100,6 +106,7 @@ class UserManagementController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'rol' => $validated['rol'],
+            'module_permissions' => array_values(array_unique($validated['module_permissions'] ?? [])),
         ];
 
         if (! empty($validated['password'])) {
