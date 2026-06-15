@@ -5,6 +5,8 @@ use Inertia\Inertia;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\PatientManagementController;
 use App\Http\Controllers\DoctorManagementController;
+use App\Http\Controllers\ClinicalRecordController;
+use App\Http\Controllers\GlobalSearchController;
 
 Route::redirect('/', '/login');
 
@@ -17,10 +19,11 @@ Route::middleware([
         ->name('dashboard')
         ->middleware('module:dashboard');
 
-    Route::get('/history', fn () => Inertia::render('ModulePlaceholder', [
-        'title' => 'Historial',
-        'description' => 'El modulo de historial clinico esta disponible para su proxima implementacion.',
-    ]))->name('history.index')->middleware('module:history');
+    Route::get('/global-search', GlobalSearchController::class)->name('global-search');
+
+    Route::get('/history', [PatientManagementController::class, 'historyIndex'])
+        ->name('history.index')
+        ->middleware('module:history');
 
     Route::get('/reports', fn () => Inertia::render('ModulePlaceholder', [
         'title' => 'Reportes',
@@ -40,6 +43,18 @@ Route::middleware([
         ->name('patients.toggleStatus')
         ->middleware('module:patients');
 
+    Route::get('patients/{patient}/history', [PatientManagementController::class, 'history'])
+        ->name('patients.history')
+        ->middleware('module_any:patients,history');
+
+    Route::get('patients/{patient}/records', [ClinicalRecordController::class, 'index'])
+        ->name('patients.records.index')
+        ->middleware('module_any:patients,history');
+
+    Route::post('patients/{patient}/records', [ClinicalRecordController::class, 'store'])
+        ->name('patients.records.store')
+        ->middleware('module_any:patients,history');
+
     Route::resource('patients', PatientManagementController::class)
         ->only(['index', 'store', 'update', 'destroy'])
         ->parameters(['patients' => 'patient'])
@@ -47,6 +62,10 @@ Route::middleware([
 
     Route::patch('doctors/{doctor}/toggle-status', [DoctorManagementController::class, 'toggleStatus'])
         ->name('doctors.toggleStatus')
+        ->middleware('module:doctors');
+
+    Route::get('doctors/{doctor}', [DoctorManagementController::class, 'show'])
+        ->name('doctors.show')
         ->middleware('module:doctors');
 
     Route::resource('doctors', DoctorManagementController::class)

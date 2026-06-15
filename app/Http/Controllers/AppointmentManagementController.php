@@ -16,10 +16,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Services\PatientAccessService;
 
 class AppointmentManagementController extends Controller
 {
-    public function __construct(protected AppointmentRepository $repo)
+    public function __construct(
+        protected AppointmentRepository $repo,
+        private readonly PatientAccessService $access,
+    )
     {
     }
 
@@ -30,8 +34,7 @@ class AppointmentManagementController extends Controller
         $user = $request->user();
 
         if ($user && $user->rol === 'doctor') {
-            $doctorId = Doctor::query()->where('user_id', $user->id)->value('doctor_id');
-            $query->where('doctor_id', $doctorId);
+            $this->access->constrainAppointments($query, $user);
         } else {
             if ($request->filled('doctor_id')) {
                 $query->where('doctor_id', $request->query('doctor_id'));
@@ -58,6 +61,7 @@ class AppointmentManagementController extends Controller
                 'COMPLETED' => 'Completada',
                 'CANCELLED' => 'Cancelada',
                 'NO_SHOW' => 'No asistió',
+                'EXPIRED' => 'Vencida',
             ];
 
             $formatTime = function ($t) {
@@ -98,7 +102,7 @@ class AppointmentManagementController extends Controller
             'appointments' => $appointments,
             'filters' => $request->only(['doctor_id', 'patient_id', 'status', 'appointment_date']),
             'doctors' => Doctor::query()->with('user')->get()->map(fn ($d) => ['doctor_id' => $d->doctor_id, 'name' => $d->user?->name]),
-            'patients' => Patient::query()->get()->map(fn ($p) => ['patient_id' => $p->patient_id, 'name' => ($p->first_name . ' ' . $p->last_name)]),
+            'patients' => $this->access->constrainPatients(Patient::query(), $user)->get()->map(fn ($p) => ['patient_id' => $p->patient_id, 'name' => ($p->first_name . ' ' . $p->last_name)]),
             'services' => Service::query()->with('specialties','doctors')->get()->map(fn ($s) => [
                 'service_id' => $s->service_id,
                 'name' => $s->name,
@@ -125,7 +129,7 @@ class AppointmentManagementController extends Controller
 
         return Inertia::render('Appointments/Create', [
             'doctors' => Doctor::query()->with('user')->get()->map(fn ($d) => ['doctor_id' => $d->doctor_id, 'name' => $d->user?->name, 'specialty_id' => $d->specialty_id]),
-            'patients' => Patient::query()->get()->map(fn ($p) => ['patient_id' => $p->patient_id, 'name' => ($p->first_name . ' ' . $p->last_name)]),
+            'patients' => $this->access->constrainPatients(Patient::query(), $user)->get()->map(fn ($p) => ['patient_id' => $p->patient_id, 'name' => ($p->first_name . ' ' . $p->last_name)]),
             'services' => Service::query()->with('specialties','doctors')->get()->map(fn ($s) => [
                 'service_id' => $s->service_id,
                 'name' => $s->name,
@@ -169,6 +173,9 @@ class AppointmentManagementController extends Controller
 
         // If doctor, force doctor_id
         if ($user && $user->rol === 'doctor') {
+            $patient = Patient::query()->findOrFail($validated['patient_id']);
+            abort_unless($this->access->canAccessPatient($user, $patient), 403);
+
             $doctorId = Doctor::query()->where('user_id', $user->id)->value('doctor_id');
             if (! $doctorId) {
                 return back()->withErrors(['doctor_id' => 'No se encontró el registro de doctor para este usuario.']);
@@ -344,6 +351,8 @@ class AppointmentManagementController extends Controller
 
     public function updateStatus(UpdateAppointmentStatusRequest $request, Appointment $appointment): RedirectResponse
     {
+        abort_unless($this->access->canManageAppointment($request->user(), $appointment), 403);
+
         $this->repo->actualizarEstado($appointment->appointment_id, $request->validated()['status']);
 
         return back()->with('status', 'Estado de cita actualizado.');
@@ -351,6 +360,8 @@ class AppointmentManagementController extends Controller
 
     public function show(Request $request, Appointment $appointment): Response
     {
+        abort_unless($this->access->canAccessAppointment($request->user(), $appointment), 403);
+
         $appointment->load(['patient', 'doctor.user', 'service', 'doctor.specialty']);
 
         $statusMap = [
@@ -358,6 +369,7 @@ class AppointmentManagementController extends Controller
             'COMPLETED' => 'Completada',
             'CANCELLED' => 'Cancelada',
             'NO_SHOW' => 'No asistió',
+            'EXPIRED' => 'Vencida',
         ];
 
         $formatTime = function ($t) {
@@ -428,6 +440,8 @@ class AppointmentManagementController extends Controller
 
     public function destroy(Request $request, Appointment $appointment): RedirectResponse
     {
+        abort_unless($this->access->canManageAppointment($request->user(), $appointment), 403);
+
         $this->repo->cancelarCita($appointment->appointment_id);
 
         return back()->with('status', 'Cita cancelada correctamente.');

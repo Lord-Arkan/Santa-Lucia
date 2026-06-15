@@ -62,6 +62,22 @@ class DoctorManagementController extends Controller
         return back()->with('status', 'Doctor creado correctamente.');
     }
 
+    public function show(Doctor $doctor): Response
+    {
+        $doctor->load(['user', 'specialty']);
+
+        return Inertia::render('Doctors/Show', [
+            'doctor' => [
+                'doctor_id' => $doctor->doctor_id,
+                'name' => $doctor->user?->name,
+                'email' => $doctor->user?->email,
+                'specialty' => $doctor->specialty?->name,
+                'license_number' => $doctor->license_number,
+                'status' => $doctor->status,
+            ],
+        ]);
+    }
+
     public function update(UpdateDoctorRequest $request, Doctor $doctor): RedirectResponse
     {
         $validated = $request->validated();

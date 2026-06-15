@@ -6,9 +6,14 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use App\Models\Appointment;
+use App\Services\PatientAccessService;
 
 class DashboardController extends Controller
 {
+    public function __construct(private readonly PatientAccessService $access)
+    {
+    }
+
     public function index(Request $request)
     {
         Carbon::setLocale('es');
@@ -30,33 +35,41 @@ class DashboardController extends Controller
 
         $end = $start->copy()->addDays(5);
 
-        $overdueCount = Appointment::where('status', 'SCHEDULED')
-            ->whereDate('appointment_date', '<', $today->toDateString())
-            ->count();
+        $baseQuery = fn () => $this->access->constrainAppointments(Appointment::query(), $request->user());
+        $now = Carbon::now();
+        $pendingQuery = function () use ($baseQuery, $now) {
+            return $baseQuery()
+                ->where('status', 'SCHEDULED')
+                ->where(function ($query) use ($now) {
+                    $query->whereDate('appointment_date', '>', $now->toDateString())
+                        ->orWhere(function ($todayQuery) use ($now) {
+                            $todayQuery->whereDate('appointment_date', $now->toDateString())
+                                ->whereTime('start_time', '>', $now->format('H:i:s'));
+                        });
+                });
+        };
 
-        $pendingCount = Appointment::where('status', 'SCHEDULED')
-            ->whereDate('appointment_date', '>=', $today->toDateString())
-            ->count();
+        $pendingCount = $pendingQuery()->count();
 
-        // Conteo relativo a la semana actualmente mostrada (start..end)
-        $totalWeek = Appointment::whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])->count();
+        $totalWeek = $pendingQuery()
+            ->whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])
+            ->count();
 
         $summary = [
-            ['id' => 'overdue', 'title' => 'Atrasadas', 'value' => $overdueCount],
             ['id' => 'pending', 'title' => 'Programadas', 'value' => $pendingCount],
             ['id' => 'week', 'title' => 'Esta semana', 'value' => $totalWeek],
         ];
 
         // Cargar citas en el rango mostrado (start..end)
-        $appointments = Appointment::with('patient')
+        $appointments = $pendingQuery()->with('patient')
             ->whereBetween('appointment_date', [$start->toDateString(), $end->toDateString()])
             ->orderBy('appointment_date')
             ->orderBy('start_time')
             ->get();
 
-        $upcomingAppointments = Appointment::with('patient')
-            ->whereDate('appointment_date', '>=', $today->toDateString())
-            ->orderBy('appointment_date')
+        $upcomingAppointments = $pendingQuery()->with('patient')
+            ->whereDate('appointment_date', $now->toDateString())
+            ->whereTime('start_time', '>', $now->format('H:i:s'))
             ->orderBy('start_time')
             ->limit(6)
             ->get()
@@ -99,7 +112,11 @@ class DashboardController extends Controller
             $rows[] = ['time' => $time, 'events' => $events];
         }
 
-        $schedule = ['days' => $days, 'rows' => $rows];
+        $schedule = [
+            'days' => $days,
+            'dates' => collect($daysDates)->map(fn (Carbon $date) => $date->format('d'))->all(),
+            'rows' => $rows,
+        ];
         // Add a human-readable range label for the displayed week (e.g. "Mayo 16 - Mayo 21")
         if (count($daysDates) > 0) {
             $startLabel = ucfirst($daysDates[0]->translatedFormat('F j'));

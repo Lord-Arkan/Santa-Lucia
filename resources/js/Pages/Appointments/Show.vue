@@ -16,6 +16,8 @@ const statusClass = (status) => {
       return 'bg-sky-300/10 text-sky-200';
     case 'CANCELLED':
       return 'bg-rose-300/10 text-rose-200';
+    case 'EXPIRED':
+      return 'bg-amber-300/10 text-amber-200';
     default:
       return 'bg-white/5 text-slate-300';
   }

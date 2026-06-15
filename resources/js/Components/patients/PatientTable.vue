@@ -1,4 +1,6 @@
 <script setup>
+import { Link } from '@inertiajs/vue3';
+
 import { patientService } from '@/services/patientService';
 
 defineProps({
@@ -10,9 +12,17 @@ defineProps({
         type: Number,
         default: null,
     },
+    canManage: {
+        type: Boolean,
+        default: false,
+    },
+    canAddClinicalRecords: {
+        type: Boolean,
+        default: false,
+    },
 });
 
-const emit = defineEmits(['edit', 'delete', 'toggle']);
+const emit = defineEmits(['edit', 'delete', 'toggle', 'addRecord']);
 
 </script>
 
@@ -51,8 +61,11 @@ const emit = defineEmits(['edit', 'delete', 'toggle']);
                         <td :class="['px-5 py-4 text-sm font-semibold', patient.status === 'inactivo' ? 'text-rose-300' : 'text-slate-400']">{{ patient.created_at }}</td>
                         <td class="px-5 py-4">
                             <div class="flex justify-end gap-2">
-                                
+                                <Link :href="route('patients.history', patient.patient_id)" class="rounded-xl border border-sky-300/20 px-3 py-2 text-xs font-black text-sky-200 hover:bg-sky-400/10">Historial</Link>
+                                <button v-if="canAddClinicalRecords" type="button" class="rounded-xl border border-teal-300/20 px-3 py-2 text-xs font-black text-teal-200 hover:bg-teal-400/10" @click="$emit('addRecord', patient)">Añadir registro</button>
+                                <Link :href="route('patients.records.index', patient.patient_id)" class="rounded-xl border border-violet-300/20 px-3 py-2 text-xs font-black text-violet-200 hover:bg-violet-400/10">Registros</Link>
                                 <button
+                                    v-if="canManage"
                                     type="button"
                                     :class="[
                                         'rounded-xl border px-3 py-2 text-xs font-black transition',
@@ -65,6 +78,7 @@ const emit = defineEmits(['edit', 'delete', 'toggle']);
                                     {{ patient.status === 'activo' ? 'Inhabilitar' : 'Habilitar' }}
                                 </button>
                                 <button
+                                    v-if="canManage"
                                     type="button"
                                     class="rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-slate-300 transition hover:bg-white/10 hover:text-white"
                                     @click="$emit('edit', patient)"
@@ -73,6 +87,7 @@ const emit = defineEmits(['edit', 'delete', 'toggle']);
                                 </button>
 
                                 <button
+                                    v-if="canManage"
                                     type="button"
                                     class="rounded-xl border border-rose-300/20 px-3 py-2 text-xs font-black text-rose-200 transition hover:bg-rose-400/10"
                                     @click="$emit('delete', patient)"

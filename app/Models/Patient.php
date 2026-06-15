@@ -35,4 +35,14 @@ class Patient extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class, 'patient_id', 'patient_id');
+    }
+
+    public function clinicalRecords()
+    {
+        return $this->hasMany(ClinicalRecord::class, 'patient_id', 'patient_id');
+    }
 }

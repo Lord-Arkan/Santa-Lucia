@@ -87,4 +87,15 @@ class ModulePermissionsTest extends TestCase
 
         $this->assertSame([], $target->fresh()->module_permissions);
     }
+
+    public function test_history_module_can_be_accessed_without_patients_module(): void
+    {
+        $user = User::factory()->create([
+            'module_permissions' => ['history'],
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('history.index'))
+            ->assertOk();
+    }
 }

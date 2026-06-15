@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import axios from 'axios';
 import { useAuth } from '@/composables/useAuth';
 import { authService } from '@/services/authService';
 import Dropdown from '@/Components/Dropdown.vue';
@@ -16,6 +17,12 @@ const props = defineProps({
 const { user } = useAuth();
 const isSidebarCollapsed = ref(false);
 const isSettingsOpen = ref(false);
+const searchQuery = ref('');
+const searchResults = ref([]);
+const searchLoading = ref(false);
+const searchOpen = ref(false);
+let searchTimer = null;
+let searchRequestId = 0;
 
 const userLabel = computed(() => user.value?.name ?? 'Usuario');
 const userRole = computed(() => user.value?.rol ?? 'asistente');
@@ -65,6 +72,48 @@ const toggleSidebar = () => {
 const logout = () => {
     authService.logout();
 };
+
+const runGlobalSearch = async () => {
+    const query = searchQuery.value.trim();
+    const requestId = ++searchRequestId;
+
+    if (query.length < 2) {
+        searchResults.value = [];
+        searchLoading.value = false;
+        return;
+    }
+
+    searchLoading.value = true;
+
+    try {
+        const { data } = await axios.get(route('global-search'), { params: { q: query } });
+        if (requestId === searchRequestId) {
+            searchResults.value = data.results ?? [];
+            searchOpen.value = true;
+        }
+    } catch {
+        if (requestId === searchRequestId) {
+            searchResults.value = [];
+        }
+    } finally {
+        if (requestId === searchRequestId) {
+            searchLoading.value = false;
+        }
+    }
+};
+
+const selectSearchResult = (result) => {
+    searchOpen.value = false;
+    searchQuery.value = '';
+    router.visit(result.url);
+};
+
+watch(searchQuery, () => {
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(runGlobalSearch, 250);
+});
+
+onBeforeUnmount(() => window.clearTimeout(searchTimer));
 
 onMounted(() => {
     isSidebarCollapsed.value = window.localStorage.getItem('santa-lucia-sidebar-collapsed') === 'true';
@@ -253,10 +302,32 @@ watch(isSettingsOpen, (value) => {
                                 <path d="m21 20-5.2-5.2a7 7 0 1 0-1 1L20 21l1-1Zm-11-6a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z" />
                             </svg>
                             <input
+                                v-model="searchQuery"
                                 type="search"
                                 placeholder="Buscar paciente, cita o doctor..."
+                                autocomplete="off"
+                                @focus="searchOpen = true"
+                                @keydown.esc="searchOpen = false"
                                 class="h-12 w-full rounded-2xl border border-white/10 bg-white/5 pl-12 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/60 focus:ring-4 focus:ring-teal-400/10"
                             >
+                            <div v-if="searchOpen && searchQuery.trim().length >= 2" class="absolute right-0 top-14 z-50 max-h-[420px] w-full overflow-y-auto rounded-2xl border border-white/10 bg-[#0f1c27] p-2 shadow-2xl shadow-black/40">
+                                <p v-if="searchLoading" class="px-3 py-4 text-sm font-semibold text-slate-400">Buscando...</p>
+                                <button
+                                    v-for="result in searchResults"
+                                    v-else
+                                    :key="`${result.type}-${result.url}`"
+                                    type="button"
+                                    class="flex w-full items-start gap-3 rounded-xl px-3 py-3 text-left hover:bg-white/10"
+                                    @click="selectSearchResult(result)"
+                                >
+                                    <span class="rounded-full bg-teal-400/10 px-2 py-1 text-[10px] font-black uppercase text-teal-200">{{ result.type }}</span>
+                                    <span class="min-w-0">
+                                        <span class="block truncate text-sm font-black text-white">{{ result.title }}</span>
+                                        <span class="mt-1 block truncate text-xs font-semibold text-slate-500">{{ result.subtitle }}</span>
+                                    </span>
+                                </button>
+                                <p v-if="!searchLoading && !searchResults.length" class="px-3 py-4 text-sm font-semibold text-slate-400">Sin resultados autorizados.</p>
+                            </div>
                         </div>
 
                         <div class="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">

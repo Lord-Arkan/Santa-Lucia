@@ -17,7 +17,6 @@ const props = defineProps({
     },
 });
 
-const dayNumbers = ['16', '17', '18', '19', '20', '21'];
 const palette = [
     'from-teal-400 to-cyan-400 text-slate-950',
     'from-cyan-500 to-blue-500 text-white',
@@ -37,7 +36,7 @@ const calendarDays = computed(() => props.schedule.days.map((day, dayIndex) => {
 
     return {
         day,
-        date: dayNumbers[dayIndex] ?? String(dayIndex + 1).padStart(2, '0'),
+        date: props.schedule.dates?.[dayIndex] ?? String(dayIndex + 1).padStart(2, '0'),
         appointments,
     };
 }));

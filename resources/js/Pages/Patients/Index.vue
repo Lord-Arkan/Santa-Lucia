@@ -13,6 +13,8 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    canManagePatients: { type: Boolean, default: false },
+    canAddClinicalRecords: { type: Boolean, default: false },
 });
 
 const page = usePage();
@@ -62,6 +64,27 @@ const showModal = ref(false);
 const status = computed(() => page.props.flash?.status ?? '');
 
 const form = useForm(patientService.defaultForm());
+const recordPatient = ref(null);
+const showRecordModal = ref(false);
+const recordForm = useForm({ type: 'Observacion', content: '' });
+
+const openRecord = (patient) => {
+    recordPatient.value = patient;
+    recordForm.reset();
+    recordForm.clearErrors();
+    showRecordModal.value = true;
+};
+
+const submitRecord = () => {
+    recordForm.post(route('patients.records.store', recordPatient.value.patient_id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showRecordModal.value = false;
+            recordPatient.value = null;
+            recordForm.reset();
+        },
+    });
+};
 
 const resetForm = () => {
     editingPatient.value = null;
@@ -184,7 +207,7 @@ const togglePatientStatus = (patient) => {
                     </button>
                 </div>
 
-                <div class="flex justify-end">
+                <div v-if="props.canManagePatients" class="flex justify-end">
                     <button
                         type="button"
                         class="rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-400 px-4 py-2 text-sm font-black text-slate-950 shadow-lg hover:opacity-95"
@@ -220,9 +243,12 @@ const togglePatientStatus = (patient) => {
 
             <PatientTable
                 :patients="props.patients.data"
+                :can-manage="props.canManagePatients"
+                :can-add-clinical-records="props.canAddClinicalRecords"
                 @edit="editPatient"
                 @delete="deletePatient"
                 @toggle="togglePatientStatus"
+                @add-record="openRecord"
             />
 
             <div v-if="props.patients.links" class="flex items-center justify-between px-2 py-4">
@@ -248,6 +274,28 @@ const togglePatientStatus = (patient) => {
                         @submit="submit"
                         @cancel="resetForm"
                     />
+                </template>
+            </DialogModal>
+
+            <DialogModal :show="showRecordModal" @close="showRecordModal = false" max-width="2xl">
+                <template #content>
+                    <form class="rounded-[2rem] border border-white/10 bg-[#162130] p-6" @submit.prevent="submitRecord">
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Nuevo registro clinico</p>
+                        <h3 class="mt-2 text-xl font-black text-white">{{ recordPatient?.first_name }} {{ recordPatient?.last_name }}</h3>
+                        <label class="mt-5 block text-xs font-bold uppercase text-slate-400">Tipo
+                            <select v-model="recordForm.type" class="mt-2 h-12 w-full rounded-2xl border border-white/10 bg-[#101824] px-4 text-white">
+                                <option>Receta</option><option>Observacion</option><option>Diagnostico</option><option>Indicacion</option><option>Evolucion</option><option>Otro</option>
+                            </select>
+                        </label>
+                        <label class="mt-4 block text-xs font-bold uppercase text-slate-400">Detalle
+                            <textarea v-model="recordForm.content" rows="7" class="mt-2 w-full rounded-2xl border border-white/10 bg-[#101824] p-4 text-white" />
+                            <span v-if="recordForm.errors.content" class="mt-1 block text-xs font-bold text-rose-300">{{ recordForm.errors.content }}</span>
+                        </label>
+                        <div class="mt-5 flex justify-end gap-3">
+                            <button type="button" class="rounded-xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-300" @click="showRecordModal = false">Cancelar</button>
+                            <button type="submit" :disabled="recordForm.processing" class="rounded-xl bg-teal-400 px-4 py-2 text-sm font-black text-slate-950">Guardar registro</button>
+                        </div>
+                    </form>
                 </template>
             </DialogModal>
 

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
 use App\Models\Patient;
+use App\Models\Appointment;
+use App\Services\PatientAccessService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,9 +14,13 @@ use Inertia\Response;
 
 class PatientManagementController extends Controller
 {
+    public function __construct(private readonly PatientAccessService $access)
+    {
+    }
+
     public function index(Request $request): Response
     {
-        $query = Patient::query();
+        $query = $this->access->constrainPatients(Patient::query(), $request->user());
 
         if ($request->filled('first_name')) {
             $query->where('first_name', 'like', '%'.$request->query('first_name').'%');
@@ -58,7 +64,72 @@ class PatientManagementController extends Controller
         return Inertia::render('Patients/Index', [
             'patients' => $patients,
             'filters' => $request->only(['first_name', 'last_name', 'document_number', 'email']),
+            'canManagePatients' => in_array($request->user()->rol, ['administrador', 'jefe_area'], true),
+            'canAddClinicalRecords' => $request->user()->rol === 'doctor',
         ]);
+    }
+
+    public function history(Request $request, Patient $patient): Response
+    {
+        abort_unless($this->access->canAccessPatient($request->user(), $patient), 403);
+
+        $appointments = Appointment::query()
+            ->with(['doctor.user', 'service'])
+            ->where('patient_id', $patient->patient_id)
+            ->orderByDesc('appointment_date')
+            ->orderByDesc('start_time')
+            ->get()
+            ->map(fn (Appointment $appointment) => [
+                'appointment_id' => $appointment->appointment_id,
+                'doctor' => $appointment->doctor?->user?->name,
+                'service' => $appointment->service?->name,
+                'appointment_date' => $appointment->appointment_date?->format('d/m/Y'),
+                'start_time' => $appointment->start_time?->format('H:i'),
+                'status' => $appointment->status,
+                'detail_url' => $request->user()->hasModuleAccess('appointments')
+                    ? route('appointments.show', $appointment)
+                    : null,
+            ]);
+
+        return Inertia::render('Patients/History', [
+            'patient' => [
+                'patient_id' => $patient->patient_id,
+                'name' => trim($patient->first_name.' '.$patient->last_name),
+                'document' => $patient->document_type.' '.$patient->document_number,
+                'allergies' => $patient->allergies,
+                'previous_conditions' => $patient->previous_conditions,
+            ],
+            'appointments' => $appointments,
+            'clinicalRecords' => $patient->clinicalRecords()
+                ->with('doctor.user')
+                ->latest()
+                ->get()
+                ->map(fn ($record) => [
+                    'id' => $record->id,
+                    'doctor' => $record->doctor?->user?->name,
+                    'type' => $record->type,
+                    'content' => $record->content,
+                    'created_at' => $record->created_at?->format('d/m/Y H:i'),
+                ]),
+        ]);
+    }
+
+    public function historyIndex(Request $request): Response
+    {
+        $patients = $this->access->constrainPatients(Patient::query(), $request->user())
+            ->withCount(['appointments', 'clinicalRecords'])
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->get()
+            ->map(fn (Patient $patient) => [
+                'patient_id' => $patient->patient_id,
+                'name' => trim($patient->first_name.' '.$patient->last_name),
+                'document' => $patient->document_type.' '.$patient->document_number,
+                'appointments_count' => $patient->appointments_count,
+                'clinical_records_count' => $patient->clinical_records_count,
+            ]);
+
+        return Inertia::render('Patients/HistoryIndex', ['patients' => $patients]);
     }
 
     public function store(StorePatientRequest $request): RedirectResponse
@@ -81,6 +152,8 @@ class PatientManagementController extends Controller
 
     public function toggleStatus(Request $request, Patient $patient): RedirectResponse
     {
+        abort_unless(in_array($request->user()->rol, ['administrador', 'jefe_area'], true), 403);
+
         $patient->status = $patient->status === 'activo' ? 'inactivo' : 'activo';
         $patient->save();
 
@@ -89,8 +162,10 @@ class PatientManagementController extends Controller
         return back()->with('status', $message);
     }
 
-    public function destroy(Patient $patient): RedirectResponse
+    public function destroy(Request $request, Patient $patient): RedirectResponse
     {
+        abort_unless(in_array($request->user()->rol, ['administrador', 'jefe_area'], true), 403);
+
         Patient::destroy($patient->patient_id);
 
         return back()->with('status', 'Paciente eliminado correctamente.');

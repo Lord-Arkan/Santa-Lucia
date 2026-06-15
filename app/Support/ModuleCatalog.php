@@ -67,7 +67,7 @@ final class ModuleCatalog
         return match ($role) {
             'administrador' => self::keys(),
             'jefe_area' => ['dashboard', 'services', 'patients', 'doctors', 'configuration'],
-            'doctor' => ['dashboard', 'appointments', 'doctor_schedules'],
+            'doctor' => ['dashboard', 'appointments', 'patients', 'doctor_schedules', 'history'],
             'asistente' => ['dashboard', 'appointments', 'patients'],
             'contador' => ['dashboard', 'reports'],
             default => ['dashboard'],
