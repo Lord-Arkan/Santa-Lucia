@@ -5,12 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY resources ./resources
-COPY public ./public
-COPY vite.config.js tailwind.config.js postcss.config.js jsconfig.json ./
-COPY bootstrap ./bootstrap
-COPY routes ./routes
-COPY app ./app
+COPY . .
 
 RUN npm run build
 
