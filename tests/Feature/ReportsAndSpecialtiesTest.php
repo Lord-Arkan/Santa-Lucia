@@ -90,7 +90,7 @@ class ReportsAndSpecialtiesTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('summary.total_appointments', 3)
-                ->where('summary.pending_appointments', 1)
+                ->where('summary.pending_appointments', 0)
                 ->where('summary.attended_appointments', 1)
                 ->where('summary.cancelled_appointments', 1)
                 ->has('periodReport.rows.data', 3)

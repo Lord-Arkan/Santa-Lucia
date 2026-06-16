@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
             'module' => \App\Http\Middleware\EnsureUserHasModuleAccess::class,
             'module_any' => \App\Http\Middleware\EnsureUserHasAnyModuleAccess::class,
+            'sync.expired.appointments' => \App\Http\Middleware\SyncExpiredAppointments::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

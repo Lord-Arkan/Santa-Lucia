@@ -18,21 +18,21 @@ Route::middleware([
 ])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])
         ->name('dashboard')
-        ->middleware('module:dashboard');
+        ->middleware(['module:dashboard', 'sync.expired.appointments']);
 
     Route::get('/global-search', GlobalSearchController::class)->name('global-search');
 
     Route::get('/history', [PatientManagementController::class, 'historyIndex'])
         ->name('history.index')
-        ->middleware('module:history');
+        ->middleware(['module:history', 'sync.expired.appointments']);
 
     Route::get('/reports', [ReportController::class, 'index'])
         ->name('reports.index')
-        ->middleware('module:reports');
+        ->middleware(['module:reports', 'sync.expired.appointments']);
 
     Route::get('/reports/export/{format}', [ReportController::class, 'export'])
         ->name('reports.export')
-        ->middleware('module:reports');
+        ->middleware(['module:reports', 'sync.expired.appointments']);
 
     Route::resource('users', UserManagementController::class)
         ->only(['index', 'store', 'update', 'destroy'])
@@ -58,7 +58,7 @@ Route::middleware([
 
     Route::get('patients/{patient}/history', [PatientManagementController::class, 'history'])
         ->name('patients.history')
-        ->middleware('module_any:patients,history');
+        ->middleware(['module_any:patients,history', 'sync.expired.appointments']);
 
     Route::get('patients/{patient}/records', [ClinicalRecordController::class, 'index'])
         ->name('patients.records.index')
@@ -103,18 +103,18 @@ Route::middleware([
     // Appointments (Citas)
     Route::get('appointments/slots', [\App\Http\Controllers\AppointmentManagementController::class, 'slots'])
         ->name('appointments.slots')
-        ->middleware('module:appointments');
+        ->middleware(['module:appointments', 'sync.expired.appointments']);
 
     Route::patch('appointments/{appointment}/update-status', [\App\Http\Controllers\AppointmentManagementController::class, 'updateStatus'])
         ->name('appointments.updateStatus')
-        ->middleware('module:appointments');
+        ->middleware(['module:appointments', 'sync.expired.appointments']);
 
     Route::post('appointments/patients', [\App\Http\Controllers\AppointmentManagementController::class, 'storePatient'])
         ->name('appointments.patients.store')
-        ->middleware('module:appointments');
+        ->middleware(['module:appointments', 'sync.expired.appointments']);
 
     Route::resource('appointments', \App\Http\Controllers\AppointmentManagementController::class)
         ->only(['index', 'create', 'store', 'show', 'destroy'])
         ->parameters(['appointments' => 'appointment'])
-        ->middleware('module:appointments');
+        ->middleware(['module:appointments', 'sync.expired.appointments']);
 });
