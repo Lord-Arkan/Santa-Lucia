@@ -66,4 +66,4 @@ USER www-data
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "mkdir -p database storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache && touch database/database.sqlite && php artisan migrate --force && php artisan config:cache && php artisan view:cache && exec php artisan serve --host 0.0.0.0 --port ${PORT:-10000}"]
+CMD ["sh", "-c", "mkdir -p database storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache && touch database/database.sqlite && php artisan migrate --force && php artisan db:seed --force && php artisan config:cache && php artisan view:cache && exec php artisan serve --host 0.0.0.0 --port ${PORT:-10000}"]
