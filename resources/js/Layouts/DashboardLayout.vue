@@ -51,6 +51,7 @@ const allNavItems = [
 
 const allSettingsItems = [
     { module: 'configuration', label: 'Usuarios', routeName: 'users.index', icon: 'M8 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm8-1a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM2 20a6 6 0 0 1 12 0v1H2v-1Zm12.5 1v-1a7.5 7.5 0 0 0-2.1-5.2A5 5 0 0 1 22 18v3h-7.5Z' },
+    { module: 'configuration', label: 'Especialidades', routeName: 'specialties.index', icon: 'M6 3h12v4H6V3Zm-2 7h16v11H4V10Zm5 3v5m2.5-2.5h-5M14 13h3M14 17h3' },
 ];
 
 const hasModuleAccess = (module) => user.value?.module_permissions?.includes(module) ?? false;
@@ -275,8 +276,8 @@ watch(isSettingsOpen, (value) => {
 
         <section class="min-w-0 bg-[#101824]">
             <header class="sticky top-0 z-20 border-b border-white/10 bg-[#101824]/90 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
-                <div class="flex items-center gap-4 justify-between flex-nowrap">
-                    <div class="flex items-center gap-3 flex-nowrap">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                    <div class="flex min-w-0 items-center gap-3">
                         <div v-if="isSidebarCollapsed" class="hidden lg:grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-cyan-500/20 mr-2" aria-hidden="true">
                             <svg viewBox="0 0 48 48" class="size-7 text-white" aria-hidden="true">
                                 <path fill="currentColor" d="M18 6h12v12h12v12H30v12H18V30H6V18h12z" />
@@ -297,8 +298,8 @@ watch(isSettingsOpen, (value) => {
                         
                     </div>
 
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <div class="relative w-full sm:w-[360px]">
+                    <div class="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center xl:w-auto">
+                        <div class="relative w-full sm:min-w-[280px] sm:flex-1 xl:w-[360px] xl:flex-none">
                             <svg class="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="m21 20-5.2-5.2a7 7 0 1 0-1 1L20 21l1-1Zm-11-6a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z" />
                             </svg>
@@ -331,7 +332,7 @@ watch(isSettingsOpen, (value) => {
                             </div>
                         </div>
 
-                        <div class="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+                        <div class="flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 sm:max-w-[320px] xl:max-w-none">
                             <img
                                 v-if="userPhotoUrl"
                                 :src="userPhotoUrl"

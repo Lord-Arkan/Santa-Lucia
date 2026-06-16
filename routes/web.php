@@ -1,12 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\PatientManagementController;
 use App\Http\Controllers\DoctorManagementController;
 use App\Http\Controllers\ClinicalRecordController;
 use App\Http\Controllers\GlobalSearchController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SpecialtyManagementController;
 
 Route::redirect('/', '/login');
 
@@ -25,10 +26,13 @@ Route::middleware([
         ->name('history.index')
         ->middleware('module:history');
 
-    Route::get('/reports', fn () => Inertia::render('ModulePlaceholder', [
-        'title' => 'Reportes',
-        'description' => 'El modulo de reportes esta disponible para su proxima implementacion.',
-    ]))->name('reports.index')->middleware('module:reports');
+    Route::get('/reports', [ReportController::class, 'index'])
+        ->name('reports.index')
+        ->middleware('module:reports');
+
+    Route::get('/reports/export/{format}', [ReportController::class, 'export'])
+        ->name('reports.export')
+        ->middleware('module:reports');
 
     Route::resource('users', UserManagementController::class)
         ->only(['index', 'store', 'update', 'destroy'])
@@ -37,6 +41,15 @@ Route::middleware([
 
     Route::patch('users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])
         ->name('users.toggleStatus')
+        ->middleware('module:configuration');
+
+    Route::patch('specialties/{specialty}/toggle-status', [SpecialtyManagementController::class, 'toggleStatus'])
+        ->name('specialties.toggleStatus')
+        ->middleware('module:configuration');
+
+    Route::resource('specialties', SpecialtyManagementController::class)
+        ->only(['index', 'store', 'update', 'destroy'])
+        ->parameters(['specialties' => 'specialty'])
         ->middleware('module:configuration');
 
     Route::patch('patients/{patient}/toggle-status', [PatientManagementController::class, 'toggleStatus'])
