@@ -108,6 +108,28 @@ class ReportsAndSpecialtiesTest extends TestCase
             ->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
 
+    public function test_reports_group_periods_automatically_by_range_size(): void
+    {
+        $admin = User::factory()->create([
+            'rol' => 'administrador',
+            'module_permissions' => ['reports'],
+        ]);
+        [$doctor, $patient, $service] = $this->clinicalContext();
+        $this->appointment($patient, $doctor, $service, '2026-01-01', 'COMPLETED');
+
+        $this->actingAs($admin)
+            ->get(route('reports.index', ['start_date' => '2026-01-01', 'end_date' => '2026-01-31']))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('filters.group_by', 'day'));
+
+        $this->actingAs($admin)
+            ->get(route('reports.index', ['start_date' => '2026-01-01', 'end_date' => '2026-03-31']))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('filters.group_by', 'month'));
+
+        $this->actingAs($admin)
+            ->get(route('reports.index', ['start_date' => '2025-01-01', 'end_date' => '2026-12-31']))
+            ->assertInertia(fn (AssertableInertia $page) => $page->where('filters.group_by', 'year'));
+    }
+
     private function clinicalContext(): array
     {
         $specialty = Specialty::query()->create(['name' => 'Medicina General']);

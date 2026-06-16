@@ -33,7 +33,6 @@ const localSearch = ref('');
 const filters = ref({
     start_date: props.filters.start_date,
     end_date: props.filters.end_date,
-    group_by: props.filters.group_by,
     doctor_id: props.filters.doctor_id,
     specialty_id: props.filters.specialty_id,
     patient_search: props.filters.patient_search,
@@ -75,8 +74,58 @@ const maxPeriod = computed(() => Math.max(...(props.charts.period ?? []).map((it
 const maxStatus = computed(() => Math.max(...(props.charts.status ?? []).map((item) => item.value), 1));
 const maxSpecialty = computed(() => Math.max(...(props.charts.specialties ?? []).map((item) => item.total), 1));
 const maxRows = computed(() => Math.max(...rows.value.map((row) => Number(row.total ?? 1)), 1));
+const statusTotal = computed(() => (props.charts.status ?? []).reduce((sum, item) => sum + Number(item.value ?? 0), 0));
+const chartPalette = ['#5eead4', '#7dd3fc', '#a7f3d0', '#fcd34d', '#fda4af', '#c4b5fd'];
 
 const activeTabLabel = computed(() => tabs.find((tab) => tab.key === activeTab.value)?.label ?? '');
+const groupLabel = computed(() => ({
+    day: 'Dias',
+    month: 'Meses',
+    year: 'Anios',
+})[props.filters.group_by] ?? 'Dias');
+
+const statusSegments = computed(() => {
+    let offset = 25;
+
+    return (props.charts.status ?? []).map((item, index) => {
+        const value = Number(item.value ?? 0);
+        const dash = statusTotal.value > 0 ? (value / statusTotal.value) * 100 : 0;
+        const segment = {
+            ...item,
+            color: chartPalette[index % chartPalette.length],
+            dash,
+            offset,
+        };
+        offset -= dash;
+
+        return segment;
+    });
+});
+
+const areaPoints = computed(() => {
+    const period = props.charts.period ?? [];
+    const width = 320;
+    const height = 150;
+
+    if (!period.length) {
+        return [];
+    }
+
+    return period.map((item, index) => {
+        const x = period.length === 1 ? width / 2 : (index / (period.length - 1)) * width;
+        const y = height - ((Number(item.total ?? 0) / maxPeriod.value) * (height - 12)) - 6;
+
+        return { x, y, label: item.period, total: item.total };
+    });
+});
+
+const areaLine = computed(() => areaPoints.value.map((point) => `${point.x},${point.y}`).join(' '));
+const areaFill = computed(() => {
+    if (!areaPoints.value.length) return '';
+    const last = areaPoints.value[areaPoints.value.length - 1];
+
+    return `0,150 ${areaLine.value} ${last.x},150`;
+});
 
 const cleanFilters = () => Object.fromEntries(Object.entries(filters.value).filter(([, value]) => value !== '' && value !== null && value !== undefined));
 
@@ -88,7 +137,6 @@ const clearFilters = () => {
     filters.value = {
         start_date: '',
         end_date: '',
-        group_by: 'day',
         doctor_id: '',
         specialty_id: '',
         patient_search: '',
@@ -113,6 +161,9 @@ const setTab = (tab) => {
 const rowLabel = (row) => row.period ?? row.doctor ?? row.specialty ?? row.patient ?? 'Registro';
 const rowValue = (row) => Number(row.total ?? 1);
 const rowPercent = (row) => `${Math.max((rowValue(row) / maxRows.value) * 100, 4)}%`;
+const trendRows = computed(() => (activeTab.value === 'new_patients' ? props.newPatientsReport.rows.data ?? [] : rows.value));
+const trendMax = computed(() => Math.max(...trendRows.value.map((row) => Number(row.total ?? 0)), 1));
+const trendHeight = (row) => `${Math.max((Number(row.total ?? 0) / trendMax.value) * 180, 8)}px`;
 
 const statusClass = (status) => {
     if (status === 'Atendida') return 'bg-emerald-300/10 text-emerald-200';
@@ -126,13 +177,13 @@ const statusClass = (status) => {
     <Head title="Reportes" />
 
     <DashboardLayout>
-        <div class="grid gap-6">
-            <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="grid min-w-0 max-w-full gap-6 overflow-hidden">
+            <div class="flex min-w-0 flex-wrap items-center justify-between gap-3">
                 <button type="button" class="rounded-2xl bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 hover:bg-white/10" @click="showFilters = !showFilters">
                     {{ showFilters ? 'Ocultar' : 'Filtros' }}
                 </button>
 
-                <div class="flex flex-wrap gap-2">
+                <div class="flex min-w-0 flex-wrap gap-2">
                     <button type="button" class="h-10 rounded-2xl border border-emerald-300/20 px-4 text-sm font-black text-emerald-200" @click="exportReport('csv')">CSV</button>
                     <button type="button" class="h-10 rounded-2xl border border-sky-300/20 px-4 text-sm font-black text-sky-200" @click="exportReport('xlsx')">Excel</button>
                     <button type="button" class="h-10 rounded-2xl border border-rose-300/20 px-4 text-sm font-black text-rose-200" @click="exportReport('pdf')">PDF</button>
@@ -141,7 +192,7 @@ const statusClass = (status) => {
             </div>
 
             <transition name="fade">
-                <section v-show="showFilters" class="rounded-[2rem] border border-white/10 bg-[#162130] p-5 shadow-xl shadow-slate-950/10">
+                <section v-show="showFilters" class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5 shadow-xl shadow-slate-950/10">
                     <form class="grid gap-3 lg:grid-cols-6" @submit.prevent="applyFilters">
                         <label class="block">
                             <span class="block text-xs font-bold text-slate-400">Inicio</span>
@@ -151,14 +202,10 @@ const statusClass = (status) => {
                             <span class="block text-xs font-bold text-slate-400">Fin</span>
                             <input v-model="filters.end_date" type="date" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none">
                         </label>
-                        <label class="block">
-                            <span class="block text-xs font-bold text-slate-400">Agrupar</span>
-                            <select v-model="filters.group_by" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-[#101824] px-3 text-sm text-white outline-none">
-                                <option value="day">Dia</option>
-                                <option value="week">Semana</option>
-                                <option value="month">Mes</option>
-                            </select>
-                        </label>
+                        <div class="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+                            <span class="block text-xs font-bold text-slate-400">Agrupacion</span>
+                            <span class="mt-1 block text-sm font-black text-teal-200">{{ groupLabel }}</span>
+                        </div>
                         <label class="block">
                             <span class="block text-xs font-bold text-slate-400">Medico</span>
                             <select v-model="filters.doctor_id" class="mt-2 h-10 w-full rounded-2xl border border-white/10 bg-[#101824] px-3 text-sm text-white outline-none">
@@ -186,7 +233,8 @@ const statusClass = (status) => {
                 </section>
             </transition>
 
-            <div class="flex gap-2 overflow-x-auto pb-1">
+            <div class="min-w-0 max-w-full overflow-x-auto pb-1">
+                <div class="flex w-max max-w-none gap-2">
                 <button
                     v-for="tab in tabs"
                     :key="tab.key"
@@ -197,76 +245,131 @@ const statusClass = (status) => {
                 >
                     {{ tab.label }}
                 </button>
+                </div>
             </div>
 
             <template v-if="activeTab === 'dashboard'">
-                <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <article v-for="[label, value] in kpis" :key="label" class="rounded-2xl border border-white/10 bg-[#162130] p-5">
+                <section class="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <article v-for="[label, value] in kpis" :key="label" class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-5">
                         <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{{ label }}</p>
-                        <p class="mt-3 text-2xl font-black text-white">{{ value }}</p>
+                        <p class="mt-3 break-words text-2xl font-black text-white">{{ value }}</p>
                     </article>
                 </section>
 
-                <section class="grid gap-4 xl:grid-cols-3">
-                    <article class="rounded-[2rem] border border-white/10 bg-[#162130] p-5">
+                <section class="grid min-w-0 gap-4 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)]">
+                    <article class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
                         <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Estados</p>
-                        <div class="mt-5 grid gap-3">
-                            <div v-for="item in props.charts.status" :key="item.label">
-                                <div class="mb-1 flex justify-between text-xs font-bold text-slate-400"><span>{{ item.label }}</span><span>{{ item.value }}</span></div>
-                                <div class="h-3 overflow-hidden rounded-full bg-slate-950/60"><div class="h-full rounded-full bg-teal-300" :style="{ width: `${(item.value / maxStatus) * 100}%` }"></div></div>
+                        <div class="mt-5 grid gap-5 sm:grid-cols-[180px_1fr] xl:grid-cols-1 2xl:grid-cols-[180px_1fr]">
+                            <div class="relative mx-auto size-44">
+                                <svg viewBox="0 0 42 42" class="size-full -rotate-90">
+                                    <circle cx="21" cy="21" r="15.915" fill="transparent" stroke="rgba(15,23,42,.8)" stroke-width="5" />
+                                    <circle
+                                        v-for="segment in statusSegments"
+                                        :key="segment.label"
+                                        cx="21"
+                                        cy="21"
+                                        r="15.915"
+                                        fill="transparent"
+                                        :stroke="segment.color"
+                                        stroke-width="5"
+                                        :stroke-dasharray="`${segment.dash} ${100 - segment.dash}`"
+                                        :stroke-dashoffset="segment.offset"
+                                    />
+                                </svg>
+                                <div class="absolute inset-0 grid place-items-center text-center">
+                                    <span>
+                                        <span class="block text-3xl font-black text-white">{{ statusTotal }}</span>
+                                        <span class="text-xs font-bold text-slate-500">citas</span>
+                                    </span>
+                                </div>
                             </div>
-                            <p v-if="!props.charts.status.length" class="py-8 text-center text-sm font-semibold text-slate-500">Sin registros.</p>
+                            <div class="grid content-center gap-3">
+                                <div v-for="segment in statusSegments" :key="segment.label" class="flex items-center justify-between gap-3 text-xs font-bold text-slate-400">
+                                    <span class="flex min-w-0 items-center gap-2">
+                                        <span class="size-2.5 shrink-0 rounded-full" :style="{ backgroundColor: segment.color }"></span>
+                                        <span class="truncate">{{ segment.label }}</span>
+                                    </span>
+                                    <span>{{ segment.value }}</span>
+                                </div>
+                                <p v-if="!statusSegments.length" class="py-8 text-center text-sm font-semibold text-slate-500">Sin registros.</p>
+                            </div>
                         </div>
                     </article>
 
-                    <article class="rounded-[2rem] border border-white/10 bg-[#162130] p-5">
-                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Periodo</p>
-                        <div class="mt-5 flex h-52 items-end gap-2 overflow-x-auto">
-                            <div v-for="item in props.charts.period" :key="item.period" class="flex min-w-10 flex-1 flex-col items-center gap-2">
-                                <div class="w-full rounded-t-xl bg-cyan-300/80" :style="{ height: `${Math.max((item.total / maxPeriod) * 180, 6)}px` }"></div>
-                                <span class="max-w-20 truncate text-[10px] font-bold text-slate-500">{{ item.period }}</span>
+                    <article class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
+                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Tendencia por periodo</p>
+                        <div class="mt-5 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                            <svg viewBox="0 0 320 170" class="h-56 w-full sm:h-64" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="reportArea" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.7" />
+                                        <stop offset="100%" stop-color="#14b8a6" stop-opacity="0.05" />
+                                    </linearGradient>
+                                </defs>
+                                <polyline v-if="areaPoints.length" :points="areaFill" fill="url(#reportArea)" stroke="none" />
+                                <polyline v-if="areaPoints.length" :points="areaLine" fill="none" stroke="#67e8f9" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                                <circle v-for="point in areaPoints" :key="point.label" :cx="point.x" :cy="point.y" r="2.4" fill="#5eead4" />
+                            </svg>
+                            <div class="flex justify-between gap-2 text-[10px] font-bold text-slate-500">
+                                <span>{{ props.charts.period?.[0]?.period ?? '' }}</span>
+                                <span>{{ props.charts.period?.[props.charts.period.length - 1]?.period ?? '' }}</span>
                             </div>
-                            <p v-if="!props.charts.period.length" class="w-full py-8 text-center text-sm font-semibold text-slate-500">Sin registros.</p>
+                            <p v-if="!areaPoints.length" class="py-8 text-center text-sm font-semibold text-slate-500">Sin registros.</p>
                         </div>
                     </article>
 
-                    <article class="rounded-[2rem] border border-white/10 bg-[#162130] p-5">
+                    <article class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
                         <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Especialidades</p>
                         <div class="mt-5 grid gap-3">
-                            <div v-for="item in props.charts.specialties" :key="item.specialty">
-                                <div class="mb-1 flex justify-between text-xs font-bold text-slate-400"><span class="truncate">{{ item.specialty }}</span><span>{{ item.total }}</span></div>
-                                <div class="h-3 overflow-hidden rounded-full bg-slate-950/60"><div class="h-full rounded-full bg-sky-300" :style="{ width: `${(item.total / maxSpecialty) * 100}%` }"></div></div>
+                            <div v-for="(item, index) in props.charts.specialties" :key="item.specialty" class="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
+                                <div class="mb-2 flex justify-between gap-3 text-xs font-bold text-slate-400">
+                                    <span class="truncate">{{ item.specialty }}</span>
+                                    <span>{{ item.total }}</span>
+                                </div>
+                                <div class="h-3 overflow-hidden rounded-full bg-slate-950/60">
+                                    <div class="h-full rounded-full" :style="{ width: `${(item.total / maxSpecialty) * 100}%`, backgroundColor: chartPalette[index % chartPalette.length] }"></div>
+                                </div>
                             </div>
                             <p v-if="!props.charts.specialties.length" class="py-8 text-center text-sm font-semibold text-slate-500">Sin registros.</p>
                         </div>
                     </article>
                 </section>
+
+                <section class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Barras por periodo</p>
+                    <div class="mt-5 flex h-64 max-w-full items-end gap-2 overflow-x-auto">
+                            <div v-for="item in props.charts.period" :key="item.period" class="flex min-w-14 flex-1 flex-col items-center gap-2">
+                            <div class="w-full rounded-t-xl bg-gradient-to-t from-teal-400 to-cyan-300 shadow-lg shadow-cyan-500/10" :style="{ height: `${Math.max((item.total / maxPeriod) * 220, 8)}px` }"></div>
+                            <span class="max-w-20 truncate text-[10px] font-bold text-slate-500">{{ item.period }}</span>
+                        </div>
+                    </div>
+                </section>
             </template>
 
             <template v-else>
-                <section v-if="activeTab === 'absences'" class="grid gap-4 sm:grid-cols-3">
-                    <article class="rounded-2xl border border-white/10 bg-[#162130] p-5">
+                <section v-if="activeTab === 'absences'" class="grid min-w-0 gap-4 sm:grid-cols-3">
+                    <article class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-5">
                         <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Citas evaluadas</p>
                         <p class="mt-3 text-2xl font-black text-white">{{ props.absenceReport.stats.total }}</p>
                     </article>
-                    <article class="rounded-2xl border border-white/10 bg-[#162130] p-5">
+                    <article class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-5">
                         <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Canceladas / no asistio</p>
                         <p class="mt-3 text-2xl font-black text-white">{{ props.absenceReport.stats.absences }}</p>
                     </article>
-                    <article class="rounded-2xl border border-white/10 bg-[#162130] p-5">
+                    <article class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-5">
                         <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Ausentismo</p>
                         <p class="mt-3 text-2xl font-black text-white">{{ props.absenceReport.stats.rate }}%</p>
                     </article>
                 </section>
 
-                <section class="rounded-[2rem] border border-white/10 bg-[#162130] p-5 shadow-xl shadow-slate-950/10">
+                <section class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5 shadow-xl shadow-slate-950/10">
                     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">{{ activeTabLabel }}</p>
                         <input v-model="localSearch" type="search" class="h-10 rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none md:w-72" placeholder="Buscar en resultados">
                     </div>
 
                     <div v-if="['period', 'doctor', 'specialty', 'new_patients'].includes(activeTab)" class="mt-6 grid gap-4">
-                        <article v-for="row in rows" :key="rowLabel(row)" class="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                        <article v-for="row in rows" :key="rowLabel(row)" class="min-w-0 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
                             <div class="flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                     <p class="text-sm font-black text-white">{{ rowLabel(row) }}</p>
@@ -286,8 +389,8 @@ const statusClass = (status) => {
                         </article>
                     </div>
 
-                    <div v-else class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <article v-for="row in rows" :key="row.appointment_id" class="rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                    <div v-else class="mt-6 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        <article v-for="row in rows" :key="row.appointment_id" class="min-w-0 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
                             <div class="flex items-start justify-between gap-3">
                                 <div class="min-w-0">
                                     <p class="truncate text-sm font-black text-white">{{ row.patient }}</p>

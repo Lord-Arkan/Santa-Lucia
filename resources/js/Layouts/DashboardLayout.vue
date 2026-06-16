@@ -157,8 +157,8 @@ watch(isSettingsOpen, (value) => {
 
 <template>
     <div
-        class="min-h-screen bg-slate-950 text-slate-100 transition-[grid-template-columns] duration-300 lg:grid"
-        :class="isSidebarCollapsed ? 'lg:grid-cols-[88px_1fr]' : 'lg:grid-cols-[292px_1fr]'"
+        class="min-h-screen w-full max-w-full overflow-x-hidden bg-slate-950 text-slate-100 transition-[grid-template-columns] duration-300 lg:grid"
+        :class="isSidebarCollapsed ? 'lg:grid-cols-[88px_minmax(0,1fr)]' : 'lg:grid-cols-[292px_minmax(0,1fr)]'"
     >
         <aside class="relative hidden border-r border-white/10 bg-[#0f1c27] lg:block">
             <div class="flex h-full flex-col">
@@ -274,7 +274,7 @@ watch(isSettingsOpen, (value) => {
             </div>
         </aside>
 
-        <section class="min-w-0 bg-[#101824]">
+        <section class="min-w-0 max-w-full overflow-x-hidden bg-[#101824]">
             <header class="sticky top-0 z-20 border-b border-white/10 bg-[#101824]/90 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
                 <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                     <div class="flex min-w-0 items-center gap-3">
@@ -378,7 +378,7 @@ watch(isSettingsOpen, (value) => {
             <!-- Global toast / banner -->
             <Banner />
 
-            <main class="px-4 py-6 sm:px-6 lg:px-8">
+            <main class="min-w-0 max-w-full overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
                 <slot />
             </main>
         </section>

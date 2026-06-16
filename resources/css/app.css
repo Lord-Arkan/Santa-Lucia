@@ -15,8 +15,13 @@
         @apply min-h-screen;
     }
 
+    html,
     body {
-        @apply m-0 bg-slate-100 text-slate-800 antialiased;
+        @apply max-w-full overflow-x-hidden;
+    }
+
+    body {
+        @apply m-0 bg-slate-950 text-slate-800 antialiased;
         font-family: 'Roboto', sans-serif;
     }
 }

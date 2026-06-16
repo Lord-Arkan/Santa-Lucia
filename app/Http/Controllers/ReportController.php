@@ -109,20 +109,37 @@ class ReportController extends Controller
         $validated = $request->validate([
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
-            'group_by' => ['nullable', Rule::in(['day', 'week', 'month'])],
             'doctor_id' => ['nullable', 'integer', 'exists:doctors,doctor_id'],
             'specialty_id' => ['nullable', 'integer', 'exists:specialties,specialty_id'],
             'patient_search' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $startDate = $validated['start_date'] ?? now()->subDays(30)->toDateString();
+        $endDate = $validated['end_date'] ?? now()->toDateString();
+
         return [
-            'start_date' => $validated['start_date'] ?? now()->subDays(30)->toDateString(),
-            'end_date' => $validated['end_date'] ?? now()->toDateString(),
-            'group_by' => $validated['group_by'] ?? 'day',
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'group_by' => $this->resolveGroupBy($startDate, $endDate),
             'doctor_id' => $validated['doctor_id'] ?? '',
             'specialty_id' => $validated['specialty_id'] ?? '',
             'patient_search' => $validated['patient_search'] ?? '',
         ];
+    }
+
+    private function resolveGroupBy(string $startDate, string $endDate): string
+    {
+        $days = Carbon::parse($startDate)->diffInDays(Carbon::parse($endDate)) + 1;
+
+        if ($days <= 31) {
+            return 'day';
+        }
+
+        if ($days <= 366) {
+            return 'month';
+        }
+
+        return 'year';
     }
 
     private function appointmentBase(array $filters): Builder
@@ -424,15 +441,15 @@ class ReportController extends Controller
 
         if ($driver === 'sqlite') {
             return match ($groupBy) {
-                'week' => ["strftime('%Y-W%W', {$column})"],
                 'month' => ["strftime('%Y-%m', {$column})"],
+                'year' => ["strftime('%Y', {$column})"],
                 default => ["date({$column})"],
             };
         }
 
         return match ($groupBy) {
-            'week' => ["CONCAT(YEAR({$column}), '-W', LPAD(WEEK({$column}, 3), 2, '0'))"],
             'month' => ["DATE_FORMAT({$column}, '%Y-%m')"],
+            'year' => ["YEAR({$column})"],
             default => ["DATE({$column})"],
         };
     }

@@ -73,6 +73,7 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\SpecialtySeeder::class,
             \Database\Seeders\ServiceSeeder::class,
             \Database\Seeders\DoctorsFromUsersSeeder::class,
+            \Database\Seeders\ClinicalReportsDemoSeeder::class,
         ]);
     }
 }
