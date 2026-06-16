@@ -64,10 +64,6 @@ Route::middleware([
         ->name('doctors.toggleStatus')
         ->middleware('module:doctors');
 
-    Route::get('doctors/{doctor}', [DoctorManagementController::class, 'show'])
-        ->name('doctors.show')
-        ->middleware('module:doctors');
-
     Route::resource('doctors', DoctorManagementController::class)
         ->only(['index', 'store', 'update', 'destroy'])
         ->parameters(['doctors' => 'doctor'])

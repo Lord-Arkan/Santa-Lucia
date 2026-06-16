@@ -26,6 +26,7 @@ let searchRequestId = 0;
 
 const userLabel = computed(() => user.value?.name ?? 'Usuario');
 const userRole = computed(() => user.value?.rol ?? 'asistente');
+const searchPlaceholder = computed(() => (user.value?.rol === 'doctor' ? 'Buscar paciente...' : 'Buscar paciente, cita o doctor...'));
 const userPhotoUrl = computed(() => (user.value?.profile_photo_path ? user.value.profile_photo_url : ''));
 const userInitials = computed(() => {
     const name = userLabel.value.trim().split(' ').filter(Boolean);
@@ -304,7 +305,7 @@ watch(isSettingsOpen, (value) => {
                             <input
                                 v-model="searchQuery"
                                 type="search"
-                                placeholder="Buscar paciente, cita o doctor..."
+                                :placeholder="searchPlaceholder"
                                 autocomplete="off"
                                 @focus="searchOpen = true"
                                 @keydown.esc="searchOpen = false"

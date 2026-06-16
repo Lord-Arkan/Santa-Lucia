@@ -61,7 +61,71 @@ class ClinicalAccessAndSearchTest extends TestCase
             ->getJson(route('global-search', ['q' => 'Paciente']))
             ->assertOk()
             ->assertJsonFragment(['title' => 'Paciente Relacionado'])
-            ->assertJsonMissing(['title' => 'Paciente Ajeno']);
+            ->assertJsonMissing(['title' => 'Paciente Ajeno'])
+            ->assertJsonMissing(['type' => 'Cita'])
+            ->assertJsonMissing(['type' => 'Citas'])
+            ->assertJsonMissing(['type' => 'Doctor']);
+    }
+
+    public function test_global_search_sends_doctor_matches_to_filtered_appointments(): void
+    {
+        $admin = User::factory()->create([
+            'rol' => 'administrador',
+            'module_permissions' => ['appointments', 'patients'],
+        ]);
+        $specialty = Specialty::query()->create(['name' => 'Medicina']);
+        $doctorUser = User::factory()->create([
+            'name' => 'Doctor Buscado',
+            'rol' => 'doctor',
+        ]);
+        $doctor = Doctor::query()->create([
+            'user_id' => $doctorUser->id,
+            'specialty_id' => $specialty->specialty_id,
+            'license_number' => 'CMP-SEARCH',
+        ]);
+        $patient = Patient::query()->create([
+            'document_type' => 'DNI',
+            'document_number' => '20000001',
+            'first_name' => 'Paciente',
+            'last_name' => 'Con Cita',
+        ]);
+        $service = Service::query()->create([
+            'name' => 'Consulta general',
+            'duration_minutes' => 30,
+        ]);
+        $this->appointment($patient, $doctor, $service, now()->addDay());
+
+        $response = $this->actingAs($admin)
+            ->getJson(route('global-search', ['q' => 'Buscado']))
+            ->assertOk();
+
+        $results = collect($response->json('results'));
+
+        $this->assertTrue($results->contains(fn (array $result) => $result['type'] === 'Citas'
+            && $result['title'] === 'Citas de Doctor Buscado'
+            && $result['url'] === route('appointments.index', ['doctor_id' => $doctor->doctor_id])));
+        $this->assertFalse($results->contains(fn (array $result) => $result['type'] === 'Doctor'
+            || str_contains($result['url'], '/doctors/')));
+    }
+
+    public function test_doctor_user_global_search_does_not_find_other_doctors(): void
+    {
+        [$doctorUser] = $this->clinicalContext();
+        $specialty = Specialty::query()->first();
+        $otherDoctorUser = User::factory()->create([
+            'name' => 'Medico Externo',
+            'rol' => 'doctor',
+        ]);
+        Doctor::query()->create([
+            'user_id' => $otherDoctorUser->id,
+            'specialty_id' => $specialty->specialty_id,
+            'license_number' => 'CMP-OUT',
+        ]);
+
+        $this->actingAs($doctorUser)
+            ->getJson(route('global-search', ['q' => 'Externo']))
+            ->assertOk()
+            ->assertExactJson(['results' => []]);
     }
 
     public function test_dashboard_upcoming_appointments_only_contains_future_scheduled_appointments_from_today(): void

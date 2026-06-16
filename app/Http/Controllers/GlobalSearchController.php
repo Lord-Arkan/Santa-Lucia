@@ -45,17 +45,21 @@ class GlobalSearchController extends Controller
             $results = $results->concat($patients);
         }
 
-        if ($user->hasModuleAccess('doctors')) {
+        if ($user->rol === 'doctor') {
+            return response()->json(['results' => $results->values()]);
+        }
+
+        if ($user->hasModuleAccess('appointments')) {
             $doctors = Doctor::query()
                 ->with(['user', 'specialty'])
                 ->whereHas('user', fn ($builder) => $builder->where('name', 'like', "%{$query}%"))
                 ->limit(5)
                 ->get()
                 ->map(fn (Doctor $doctor) => [
-                    'type' => 'Doctor',
-                    'title' => $doctor->user?->name,
+                    'type' => 'Citas',
+                    'title' => 'Citas de '.$doctor->user?->name,
                     'subtitle' => $doctor->specialty?->name ?? $doctor->license_number,
-                    'url' => route('doctors.show', $doctor),
+                    'url' => route('appointments.index', ['doctor_id' => $doctor->doctor_id]),
                 ]);
 
             $results = $results->concat($doctors);
@@ -71,8 +75,7 @@ class GlobalSearchController extends Controller
                         $patients->where('first_name', 'like', "%{$query}%")
                             ->orWhere('last_name', 'like', "%{$query}%")
                             ->orWhere('document_number', 'like', "%{$query}%");
-                    })->orWhereHas('doctor.user', fn ($users) => $users->where('name', 'like', "%{$query}%"))
-                        ->orWhereHas('service', fn ($services) => $services->where('name', 'like', "%{$query}%"));
+                    })->orWhereHas('service', fn ($services) => $services->where('name', 'like', "%{$query}%"));
                 })
                 ->latest('appointment_date')
                 ->limit(5)
