@@ -44,7 +44,7 @@
 
                     <!-- Imagen principal: movida a la derecha y aumentada -->
                     <img
-                        src="/storage/img/pngwing.com.png"
+                        src="/img/login-hero.png"
                         alt="Ilustración clínica"
                         class="absolute right-4 bottom-8 h-[560px] w-[420px] object-contain"
                         loading="eager"
