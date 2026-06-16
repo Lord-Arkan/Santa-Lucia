@@ -46,6 +46,7 @@ COPY artisan ./artisan
 COPY bootstrap ./bootstrap
 COPY config ./config
 COPY app ./app
+COPY routes ./routes
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
 
 COPY . .
