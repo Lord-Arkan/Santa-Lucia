@@ -42,6 +42,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY composer.json composer.lock ./
+COPY artisan ./artisan
+COPY bootstrap ./bootstrap
+COPY config ./config
+COPY app ./app
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
 
 COPY . .
