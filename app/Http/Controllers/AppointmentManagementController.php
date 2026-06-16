@@ -228,7 +228,9 @@ class AppointmentManagementController extends Controller
 
         $this->repo->registrarCita($data);
 
-        return back()->with('status', 'Cita creada correctamente.');
+        return redirect()
+            ->to(route('appointments.index', absolute: false))
+            ->with('status', 'Cita creada correctamente.');
     }
 
     public function slots(Request $request)

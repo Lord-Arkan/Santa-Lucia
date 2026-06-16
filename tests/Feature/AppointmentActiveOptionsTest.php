@@ -88,6 +88,38 @@ class AppointmentActiveOptionsTest extends TestCase
         $this->assertDatabaseCount('appointments', 0);
     }
 
+    public function test_store_appointment_redirects_to_appointments_index(): void
+    {
+        $admin = User::factory()->create([
+            'rol' => 'administrador',
+            'module_permissions' => ['appointments'],
+        ]);
+        $specialty = Specialty::query()->create(['name' => 'Medicina']);
+        $doctor = $this->doctor($specialty, 'Doctor Activo', true, 'activo');
+        $patient = $this->patient('10000004', 'activo');
+        $service = Service::query()->create(['name' => 'Servicio Activo', 'duration_minutes' => 30, 'status' => 'activo']);
+
+        $this->actingAs($admin)
+            ->post(route('appointments.store'), [
+                'patient_id' => $patient->patient_id,
+                'doctor_id' => $doctor->doctor_id,
+                'service_id' => $service->service_id,
+                'appointment_date' => Carbon::tomorrow()->toDateString(),
+                'start_time' => '09:00',
+            ])
+            ->assertRedirect(route('appointments.index', absolute: false))
+            ->assertSessionHas('status', 'Cita creada correctamente.');
+
+        $this->assertDatabaseHas('appointments', [
+            'patient_id' => $patient->patient_id,
+            'doctor_id' => $doctor->doctor_id,
+            'service_id' => $service->service_id,
+            'start_time' => '09:00',
+            'end_time' => '09:30',
+            'status' => 'SCHEDULED',
+        ]);
+    }
+
     public function test_inactive_service_or_schedule_returns_no_slots(): void
     {
         $admin = User::factory()->create([

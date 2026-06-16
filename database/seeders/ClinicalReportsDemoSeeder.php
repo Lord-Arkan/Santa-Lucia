@@ -74,12 +74,21 @@ class ClinicalReportsDemoSeeder extends Seeder
 
     private function doctors(array $specialties): array
     {
+        $doctorNames = [
+            'Dra. Mariana Alvarez',
+            'Dr. Ricardo Salazar',
+            'Dra. Patricia Mendoza',
+            'Dr. Fernando Castillo',
+            'Dra. Claudia Rivas',
+            'Dr. Sergio Herrera',
+        ];
+
         return collect($specialties)
-            ->map(function (Specialty $specialty, int $index) {
+            ->map(function (Specialty $specialty, int $index) use ($doctorNames) {
                 $user = User::query()->updateOrCreate(
                     ['email' => 'reporte.doctor'.($index + 1).'@santalucia.test'],
                     [
-                        'name' => 'Doctor Reporte '.($index + 1),
+                        'name' => $doctorNames[$index] ?? 'Dr. Santa Lucia '.($index + 1),
                         'rol' => 'doctor',
                         'email_verified_at' => now(),
                         'password' => Hash::make('password'),

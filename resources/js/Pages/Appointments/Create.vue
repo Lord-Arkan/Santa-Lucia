@@ -4,6 +4,7 @@ import { Head, useForm, router, usePage } from '@inertiajs/vue3';
 import DashboardLayout from '@/Layouts/DashboardLayout.vue';
 import AppointmentForm from '@/Components/appointments/AppointmentForm.vue';
 import { appointmentService } from '@/services/appointmentService';
+import { toRelativeUrl } from '@/utils/navigation';
 
 const props = defineProps({
     doctors: { type: Array, default: () => [] },
@@ -24,11 +25,11 @@ if (isDoctor.value && props.my_doctor) {
 }
 
 const submit = (localForm) => {
-    const options = { preserveScroll: true, onSuccess: () => router.get(route('appointments.index')) };
+    const options = { preserveScroll: true, onSuccess: () => router.get(toRelativeUrl(route('appointments.index'))) };
     localForm.post(route('appointments.store'), options);
 };
 
-const cancel = () => router.get(route('appointments.index'));
+const cancel = () => router.get(toRelativeUrl(route('appointments.index')));
 </script>
 
 <template>
