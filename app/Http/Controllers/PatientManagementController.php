@@ -116,20 +116,42 @@ class PatientManagementController extends Controller
 
     public function historyIndex(Request $request): Response
     {
-        $patients = $this->access->constrainPatients(Patient::query(), $request->user())
-            ->withCount(['appointments', 'clinicalRecords'])
+        $query = $this->access->constrainPatients(Patient::query(), $request->user())
+            ->withCount(['appointments', 'clinicalRecords']);
+
+        if ($request->filled('search')) {
+            $search = $request->query('search');
+            $query->where(function ($builder) use ($search) {
+                $builder->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('document_number', 'like', "%{$search}%")
+                    ->orWhere('patient_id', $search);
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->query('status'));
+        }
+
+        $patients = $query
             ->orderBy('last_name')
             ->orderBy('first_name')
-            ->get()
-            ->map(fn (Patient $patient) => [
+            ->paginate(10)
+            ->withQueryString();
+
+        $patients->getCollection()->transform(fn (Patient $patient) => [
                 'patient_id' => $patient->patient_id,
                 'name' => trim($patient->first_name.' '.$patient->last_name),
                 'document' => $patient->document_type.' '.$patient->document_number,
+                'status' => $patient->status,
                 'appointments_count' => $patient->appointments_count,
                 'clinical_records_count' => $patient->clinical_records_count,
             ]);
 
-        return Inertia::render('Patients/HistoryIndex', ['patients' => $patients]);
+        return Inertia::render('Patients/HistoryIndex', [
+            'patients' => $patients,
+            'filters' => $request->only(['search', 'status']),
+        ]);
     }
 
     public function store(StorePatientRequest $request): RedirectResponse

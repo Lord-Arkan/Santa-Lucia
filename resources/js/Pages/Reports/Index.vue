@@ -153,6 +153,17 @@ const printReport = () => {
     window.print();
 };
 
+const goTo = (url) => {
+    if (!url) return;
+    router.get(url, {}, { preserveState: true, replace: true });
+};
+
+const translateLabel = (label) => String(label || '')
+    .replace(/pagination\.previous/g, 'Anterior')
+    .replace(/pagination\.next/g, 'Siguiente')
+    .replace(/Previous|previous/g, 'Anterior')
+    .replace(/Next|next/g, 'Siguiente');
+
 const setTab = (tab) => {
     activeTab.value = tab;
     localSearch.value = '';
@@ -256,7 +267,7 @@ const statusClass = (status) => {
                     </article>
                 </section>
 
-                <section class="grid min-w-0 gap-4 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_minmax(0,1fr)]">
+                <section class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                     <article class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
                         <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Estados</p>
                         <div class="mt-5 grid gap-5 sm:grid-cols-[180px_1fr] xl:grid-cols-1 2xl:grid-cols-[180px_1fr]">
@@ -297,28 +308,6 @@ const statusClass = (status) => {
                     </article>
 
                     <article class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
-                        <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Tendencia por periodo</p>
-                        <div class="mt-5 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
-                            <svg viewBox="0 0 320 170" class="h-56 w-full sm:h-64" preserveAspectRatio="none">
-                                <defs>
-                                    <linearGradient id="reportArea" x1="0" x2="0" y1="0" y2="1">
-                                        <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.7" />
-                                        <stop offset="100%" stop-color="#14b8a6" stop-opacity="0.05" />
-                                    </linearGradient>
-                                </defs>
-                                <polyline v-if="areaPoints.length" :points="areaFill" fill="url(#reportArea)" stroke="none" />
-                                <polyline v-if="areaPoints.length" :points="areaLine" fill="none" stroke="#67e8f9" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
-                                <circle v-for="point in areaPoints" :key="point.label" :cx="point.x" :cy="point.y" r="2.4" fill="#5eead4" />
-                            </svg>
-                            <div class="flex justify-between gap-2 text-[10px] font-bold text-slate-500">
-                                <span>{{ props.charts.period?.[0]?.period ?? '' }}</span>
-                                <span>{{ props.charts.period?.[props.charts.period.length - 1]?.period ?? '' }}</span>
-                            </div>
-                            <p v-if="!areaPoints.length" class="py-8 text-center text-sm font-semibold text-slate-500">Sin registros.</p>
-                        </div>
-                    </article>
-
-                    <article class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
                         <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Especialidades</p>
                         <div class="mt-5 grid gap-3">
                             <div v-for="(item, index) in props.charts.specialties" :key="item.specialty" class="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
@@ -333,6 +322,28 @@ const statusClass = (status) => {
                             <p v-if="!props.charts.specialties.length" class="py-8 text-center text-sm font-semibold text-slate-500">Sin registros.</p>
                         </div>
                     </article>
+                </section>
+
+                <section class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
+                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Tendencia por periodo</p>
+                    <div class="mt-5 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
+                        <svg viewBox="0 0 320 170" class="h-56 w-full sm:h-64" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="reportArea" x1="0" x2="0" y1="0" y2="1">
+                                    <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.7" />
+                                    <stop offset="100%" stop-color="#14b8a6" stop-opacity="0.05" />
+                                </linearGradient>
+                            </defs>
+                            <polyline v-if="areaPoints.length" :points="areaFill" fill="url(#reportArea)" stroke="none" />
+                            <polyline v-if="areaPoints.length" :points="areaLine" fill="none" stroke="#67e8f9" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                            <circle v-for="point in areaPoints" :key="point.label" :cx="point.x" :cy="point.y" r="2.4" fill="#5eead4" />
+                        </svg>
+                        <div class="flex justify-between gap-2 text-[10px] font-bold text-slate-500">
+                            <span>{{ props.charts.period?.[0]?.period ?? '' }}</span>
+                            <span>{{ props.charts.period?.[props.charts.period.length - 1]?.period ?? '' }}</span>
+                        </div>
+                        <p v-if="!areaPoints.length" class="py-8 text-center text-sm font-semibold text-slate-500">Sin registros.</p>
+                    </div>
                 </section>
 
                 <section class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
@@ -409,6 +420,21 @@ const statusClass = (status) => {
 
                     <p v-if="!rows.length" class="py-10 text-center text-sm font-semibold text-slate-500">No existen registros para los filtros seleccionados.</p>
                 </section>
+
+                <div v-if="currentPaginator?.links" class="flex flex-wrap items-center justify-between gap-3 px-2 py-4">
+                    <div class="text-sm text-slate-400">Mostrando {{ currentPaginator.from ?? 0 }} - {{ currentPaginator.to ?? 0 }} de {{ currentPaginator.total }}</div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button
+                            v-for="link in currentPaginator.links"
+                            :key="link.label + (link.url || '')"
+                            v-html="translateLabel(link.label)"
+                            :disabled="!link.url"
+                            @click.prevent="goTo(link.url)"
+                            class="rounded-md px-3 py-1 text-sm font-bold text-slate-300 hover:bg-white/10 disabled:opacity-40"
+                            :class="link.active ? 'bg-white/10' : ''"
+                        ></button>
+                    </div>
+                </div>
             </template>
         </div>
     </DashboardLayout>

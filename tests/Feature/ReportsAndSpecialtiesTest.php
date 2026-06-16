@@ -130,6 +130,45 @@ class ReportsAndSpecialtiesTest extends TestCase
             ->assertInertia(fn (AssertableInertia $page) => $page->where('filters.group_by', 'year'));
     }
 
+    public function test_history_index_supports_filters_and_pagination(): void
+    {
+        $admin = User::factory()->create([
+            'rol' => 'administrador',
+            'module_permissions' => ['history'],
+        ]);
+
+        for ($index = 1; $index <= 12; $index++) {
+            Patient::query()->create([
+                'document_type' => 'DNI',
+                'document_number' => 'HIST-'.str_pad((string) $index, 3, '0', STR_PAD_LEFT),
+                'first_name' => $index === 12 ? 'PacienteBuscado' : 'Paciente',
+                'last_name' => 'Historial '.$index,
+                'status' => $index === 1 ? 'inactivo' : 'activo',
+            ]);
+        }
+
+        $this->actingAs($admin)
+            ->get(route('history.index'))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('patients.data', 10)
+                ->where('patients.total', 12));
+
+        $this->actingAs($admin)
+            ->get(route('history.index', ['search' => 'PacienteBuscado']))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('patients.data', 1)
+                ->where('patients.data.0.name', 'PacienteBuscado Historial 12'));
+
+        $this->actingAs($admin)
+            ->get(route('history.index', ['status' => 'inactivo']))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('patients.data', 1)
+                ->where('patients.data.0.status', 'inactivo'));
+    }
+
     private function clinicalContext(): array
     {
         $specialty = Specialty::query()->create(['name' => 'Medicina General']);
