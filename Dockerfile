@@ -16,7 +16,12 @@ WORKDIR /var/www/html
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
     APP_ENV=production \
     APP_DEBUG=false \
-    PORT=10000
+    PORT=10000 \
+    DB_CONNECTION=sqlite \
+    DB_DATABASE=/var/www/html/database/database.sqlite \
+    SESSION_DRIVER=file \
+    CACHE_STORE=file \
+    QUEUE_CONNECTION=sync
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     $PHPIZE_DEPS \
@@ -60,4 +65,4 @@ USER www-data
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "php artisan migrate --force && php artisan config:cache && php artisan view:cache && exec php artisan serve --host 0.0.0.0 --port ${PORT:-10000}"]
+CMD ["sh", "-c", "mkdir -p database storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache && touch database/database.sqlite && php artisan migrate --force && php artisan config:cache && php artisan view:cache && exec php artisan serve --host 0.0.0.0 --port ${PORT:-10000}"]
