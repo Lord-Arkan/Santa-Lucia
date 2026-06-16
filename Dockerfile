@@ -45,6 +45,7 @@ COPY config ./config
 COPY app ./app
 COPY routes ./routes
 COPY database ./database
+RUN touch database/database.sqlite
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
 
 COPY . .
@@ -59,4 +60,4 @@ USER www-data
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "php artisan config:cache && php artisan view:cache && php artisan serve --host 0.0.0.0 --port ${PORT:-10000}"]
+CMD ["sh", "-c", "php artisan migrate --force && php artisan config:cache && php artisan view:cache && exec php artisan serve --host 0.0.0.0 --port ${PORT:-10000}"]
