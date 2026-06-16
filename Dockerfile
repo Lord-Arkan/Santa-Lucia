@@ -25,6 +25,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev \
     libonig-dev \
     libzip-dev \
+    libsqlite3-dev \
     libxml2-dev \
     libcurl4-openssl-dev \
     && docker-php-ext-install \
@@ -34,6 +35,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mbstring \
     opcache \
     pdo_mysql \
+    pdo_sqlite \
+    sqlite3 \
     xml \
     zip \
     && apt-get purge -y --auto-remove $PHPIZE_DEPS \
@@ -47,6 +50,7 @@ COPY bootstrap ./bootstrap
 COPY config ./config
 COPY app ./app
 COPY routes ./routes
+COPY database ./database
 RUN composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
 
 COPY . .
@@ -54,7 +58,7 @@ COPY --from=frontend /app/public/build ./public/build
 
 RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache \
     && php artisan storage:link || true \
-    && chown -R www-data:www-data storage bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache database \
     && chmod -R ug+rwX storage bootstrap/cache
 
 USER www-data
