@@ -25,17 +25,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev \
     libonig-dev \
     libzip-dev \
-    libsqlite3-dev \
     libxml2-dev \
-    libcurl4-openssl-dev \
     && docker-php-ext-install \
     bcmath \
-    curl \
     intl \
     mbstring \
     opcache \
-    pdo_sqlite \
-    sqlite3 \
     xml \
     zip \
     && apt-get purge -y --auto-remove $PHPIZE_DEPS \
