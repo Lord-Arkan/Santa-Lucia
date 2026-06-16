@@ -7,6 +7,7 @@ import PatientTable from '@/Components/patients/PatientTable.vue';
 import DialogModal from '@/Components/DialogModal.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { patientService } from '@/services/patientService';
+import { toRelativeUrl } from '@/utils/navigation';
 
 const props = defineProps({
     patients: {
@@ -45,7 +46,7 @@ const clearFilters = () => {
 
 const goTo = (url) => {
     if (!url) return;
-    router.get(url, {}, { preserveState: true, replace: true });
+    router.get(toRelativeUrl(url), {}, { preserveState: true, replace: true });
 };
 
 const translateLabel = (label) => {

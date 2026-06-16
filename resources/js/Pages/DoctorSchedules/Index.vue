@@ -7,6 +7,7 @@ import DoctorScheduleTable from '@/Components/doctor-schedules/DoctorScheduleTab
 import DialogModal from '@/Components/DialogModal.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { doctorScheduleService } from '@/services/doctorScheduleService';
+import { toRelativeUrl } from '@/utils/navigation';
 
 const props = defineProps({
     doctor_schedules: { type: Object, required: true },
@@ -142,7 +143,7 @@ const toggleSchedule = (s) => {
 
 const goTo = (url) => {
     if (!url) return;
-    router.get(url, {}, { preserveState: true, replace: true });
+    router.get(toRelativeUrl(url), {}, { preserveState: true, replace: true });
 };
 </script>
 

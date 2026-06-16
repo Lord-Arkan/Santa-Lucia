@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import DashboardLayout from '@/Layouts/DashboardLayout.vue';
+import { toRelativeUrl } from '@/utils/navigation';
 
 const props = defineProps({
     filters: { type: Object, required: true },
@@ -155,7 +156,7 @@ const printReport = () => {
 
 const goTo = (url) => {
     if (!url) return;
-    router.get(url, {}, { preserveState: true, replace: true });
+    router.get(toRelativeUrl(url), {}, { preserveState: true, replace: true });
 };
 
 const translateLabel = (label) => String(label || '')

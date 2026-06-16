@@ -7,6 +7,7 @@ import UserTable from '@/Components/users/UserTable.vue';
 import DialogModal from '@/Components/DialogModal.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { userService } from '@/services/userService';
+import { toRelativeUrl } from '@/utils/navigation';
 
 const props = defineProps({
     users: {
@@ -52,7 +53,7 @@ const clearFilters = () => {
 
 const goTo = (url) => {
     if (!url) return;
-    router.get(url, {}, { preserveState: true, replace: true });
+    router.get(toRelativeUrl(url), {}, { preserveState: true, replace: true });
 };
 
 const translateLabel = (label) => {

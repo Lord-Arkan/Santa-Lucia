@@ -7,6 +7,7 @@ import ServiceTable from '@/Components/services/ServiceTable.vue';
 import DialogModal from '@/Components/DialogModal.vue';
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { serviceService } from '@/services/serviceService';
+import { toRelativeUrl } from '@/utils/navigation';
 
 const props = defineProps({
     services: { type: Object, required: true },
@@ -36,7 +37,7 @@ const clearFilters = () => {
 
 const goTo = (url) => {
     if (!url) return;
-    router.get(url, {}, { preserveState: true, replace: true });
+    router.get(toRelativeUrl(url), {}, { preserveState: true, replace: true });
 };
 
 const translateLabel = (label) => {

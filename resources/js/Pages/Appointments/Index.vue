@@ -6,6 +6,7 @@ import AppointmentTable from '@/Components/appointments/AppointmentTable.vue';
 // Creation handled on a separate page
 import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import { appointmentService } from '@/services/appointmentService';
+import { toRelativeUrl } from '@/utils/navigation';
 
 const props = defineProps({
     appointments: { type: Object, required: true },
@@ -100,7 +101,7 @@ const openShow = (a) => {
 
 const goTo = (url) => {
     if (!url) return;
-    router.get(url, {}, { preserveState: true, replace: true });
+    router.get(toRelativeUrl(url), {}, { preserveState: true, replace: true });
 };
 
 const applyFilters = () => {

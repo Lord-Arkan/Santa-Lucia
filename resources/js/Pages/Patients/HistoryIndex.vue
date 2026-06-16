@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import DashboardLayout from '@/Layouts/DashboardLayout.vue';
+import { toRelativeUrl } from '@/utils/navigation';
 
 const props = defineProps({
     patients: { type: Object, required: true },
@@ -29,7 +30,7 @@ const clearFilters = () => {
 
 const goTo = (url) => {
     if (!url) return;
-    router.get(url, {}, { preserveState: true, replace: true });
+    router.get(toRelativeUrl(url), {}, { preserveState: true, replace: true });
 };
 
 const translateLabel = (label) => String(label || '')

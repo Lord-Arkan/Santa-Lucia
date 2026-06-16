@@ -7,6 +7,7 @@ import ConfirmDialog from '@/Components/ConfirmDialog.vue';
 import SpecialtyForm from '@/Components/specialties/SpecialtyForm.vue';
 import SpecialtyTable from '@/Components/specialties/SpecialtyTable.vue';
 import { specialtyService } from '@/services/specialtyService';
+import { toRelativeUrl } from '@/utils/navigation';
 
 const props = defineProps({
     specialties: { type: Object, required: true },
@@ -43,7 +44,7 @@ const clearFilters = () => {
 
 const goTo = (url) => {
     if (!url) return;
-    router.get(url, {}, { preserveState: true, replace: true });
+    router.get(toRelativeUrl(url), {}, { preserveState: true, replace: true });
 };
 
 const resetForm = () => {
