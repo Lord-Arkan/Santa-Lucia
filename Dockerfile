@@ -16,6 +16,7 @@ WORKDIR /var/www/html
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
     APP_ENV=production \
     APP_DEBUG=false \
+    APP_URL=https://santa-lucia.onrender.com \
     PORT=10000 \
     DB_CONNECTION=sqlite \
     DB_DATABASE=/var/www/html/database/database.sqlite \
