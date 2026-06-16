@@ -34,7 +34,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     intl \
     mbstring \
     opcache \
-    pdo_mysql \
     pdo_sqlite \
     sqlite3 \
     xml \
