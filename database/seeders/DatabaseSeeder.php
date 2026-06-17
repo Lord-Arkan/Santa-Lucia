@@ -49,7 +49,7 @@ class DatabaseSeeder extends Seeder
                 'rol' => 'jefe_area',
             ],
             [
-                'name' => 'Franklik Lopez',
+                'name' => 'Franklin Lopez',
                 'email' => 'franklin@example.com',
                 'rol' => 'administrador',
             ],
