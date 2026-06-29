@@ -1,5 +1,6 @@
 <script setup>
 import { userService } from '@/services/userService';
+import RowActionMenu from '@/Components/ui/RowActionMenu.vue';
 
 defineProps({
     users: {
@@ -14,15 +15,53 @@ defineProps({
 
 const emit = defineEmits(['edit', 'delete', 'toggle']);
 
+const userActions = (user, currentUserId) => [
+    { key: 'toggle', label: user.status ? 'Deshabilitar' : 'Habilitar', tone: user.status ? 'danger' : 'success' },
+    { key: 'edit', label: 'Editar' },
+    { key: 'delete', label: 'Eliminar', tone: 'danger', disabled: user.id === currentUserId },
+];
+
+const handleAction = (user, action) => {
+    emit(action.key, user);
+};
+
 </script>
 
 <template>
-    <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-[#162130] shadow-xl shadow-slate-950/10">
-        <div class="border-b border-white/10 p-5">
-            <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">Usuarios</p>
+    <section class="rounded-2xl border border-white/10 bg-[#162130] shadow-xl shadow-slate-950/10 sm:rounded-[2rem]">
+        <div class="border-b border-white/10 p-4 sm:p-5">
+            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs sm:tracking-[0.24em]">Usuarios</p>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="grid gap-3 p-3 sm:hidden">
+            <article v-for="user in users" :key="user.id" class="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex min-w-0 items-start gap-3">
+                        <img v-if="user.profile_photo_path" :src="user.profile_photo_url" :alt="user.name" class="size-9 shrink-0 rounded-full object-cover ring-2 ring-teal-300/20">
+                        <span v-else :class="['grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-xs font-black', user.status ? 'text-white' : 'text-rose-200']">
+                            {{ user.name.slice(0, 2).toUpperCase() }}
+                        </span>
+                        <div class="min-w-0">
+                            <p :class="['truncate text-sm font-black', user.status ? 'text-white' : 'text-rose-400']">{{ user.name }}</p>
+                            <p :class="['mt-1 truncate text-xs font-semibold', user.status ? 'text-slate-400' : 'text-rose-300']">{{ user.email }}</p>
+                        </div>
+                    </div>
+                    <span :class="['shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black', user.status ? 'bg-emerald-300/10 text-emerald-200' : 'bg-rose-300/10 text-rose-200']">
+                        {{ user.status ? 'Activo' : 'Inactivo' }}
+                    </span>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold">
+                    <p :class="user.status ? 'text-slate-400' : 'text-rose-300'"><span class="block text-slate-500">Rol</span>{{ userService.roleLabel(user.rol) }}</p>
+                    <p :class="user.status ? 'text-slate-400' : 'text-rose-300'"><span class="block text-slate-500">Alta</span>{{ user.created_at }}</p>
+                </div>
+                <div class="mt-3 flex justify-end">
+                    <RowActionMenu :actions="userActions(user, currentUserId)" @select="handleAction(user, $event)" />
+                </div>
+            </article>
+            <p v-if="!users.length" class="py-6 text-center text-sm font-semibold text-slate-500">No hay usuarios registrados.</p>
+        </div>
+
+        <div class="hidden overflow-x-auto sm:block">
             <table class="min-w-[820px] w-full text-left">
                 <thead class="bg-slate-950/30 text-xs uppercase tracking-[0.16em] text-slate-500">
                     <tr>
@@ -64,37 +103,8 @@ const emit = defineEmits(['edit', 'delete', 'toggle']);
                         </td>
                         <td :class="['px-5 py-4 text-sm font-semibold', user.status ? 'text-slate-400' : 'text-rose-300']">{{ user.created_at }}</td>
                         <td class="px-5 py-4">
-                            <div class="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    :class="[
-                                        'rounded-xl border px-3 py-2 text-xs font-black transition',
-                                        user.status
-                                            ? 'border-rose-300/20 text-rose-200 hover:bg-rose-400/10'
-                                            : 'border-emerald-300/20 text-emerald-200 hover:bg-emerald-400/10'
-                                    ]"
-                                    @click="$emit('toggle', user)"
-                                >
-                                    {{ user.status ? 'Deshabilitar' : 'Habilitar' }}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-slate-300 transition hover:bg-white/10 hover:text-white"
-                                    @click="$emit('edit', user)"
-                                >
-                                    Editar
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="rounded-xl border border-rose-300/20 px-3 py-2 text-xs font-black text-rose-200 transition hover:bg-rose-400/10"
-                                    :disabled="user.id === currentUserId"
-                                    :class="user.id === currentUserId ? 'cursor-not-allowed opacity-40' : ''"
-                                    @click="$emit('delete', user)"
-                                >
-                                    Eliminar
-                                </button>
+                            <div class="flex justify-end">
+                                <RowActionMenu :actions="userActions(user, currentUserId)" @select="handleAction(user, $event)" />
                             </div>
                         </td>
                     </tr>

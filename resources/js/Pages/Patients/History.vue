@@ -13,15 +13,15 @@ defineProps({
     <Head :title="`Historial - ${patient.name}`" />
 
     <DashboardLayout title="Historial clinico">
-        <div class="grid gap-6">
-            <section class="rounded-[2rem] border border-white/10 bg-[#162130] p-6">
-                <div class="flex flex-wrap items-start justify-between gap-4">
+        <div class="grid gap-4 sm:gap-6">
+            <section class="rounded-2xl border border-white/10 bg-[#162130] p-4 sm:rounded-[2rem] sm:p-6">
+                <div class="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
                     <div>
                         <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Paciente</p>
-                        <h2 class="mt-2 text-2xl font-black text-white">{{ patient.name }}</h2>
+                        <h2 class="mt-2 text-xl font-black text-white sm:text-2xl">{{ patient.name }}</h2>
                         <p class="mt-1 text-sm text-slate-400">{{ patient.document }}</p>
                     </div>
-                    <Link :href="route('patients.records.index', patient.patient_id)" class="rounded-2xl bg-teal-400 px-4 py-2 text-sm font-black text-slate-950">
+                    <Link :href="route('patients.records.index', patient.patient_id)" class="w-full rounded-xl bg-teal-400 px-4 py-2 text-center text-sm font-black text-slate-950 sm:w-auto sm:rounded-2xl">
                         Ver registros clinicos
                     </Link>
                 </div>
@@ -31,12 +31,12 @@ defineProps({
                 </div>
             </section>
 
-            <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-[#162130]">
-                <div class="border-b border-white/10 p-5">
-                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Historial de citas</p>
+            <section class="overflow-hidden rounded-2xl border border-white/10 bg-[#162130] sm:rounded-[2rem]">
+                <div class="border-b border-white/10 p-4 sm:p-5">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs">Historial de citas</p>
                 </div>
                 <div v-if="appointments.length" class="divide-y divide-white/10">
-                    <article v-for="appointment in appointments" :key="appointment.appointment_id" class="flex flex-wrap items-center justify-between gap-4 p-5">
+                    <article v-for="appointment in appointments" :key="appointment.appointment_id" class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                         <div>
                             <p class="font-black text-white">{{ appointment.service || 'Consulta' }}</p>
                             <p class="mt-1 text-sm text-slate-400">{{ appointment.appointment_date }} {{ appointment.start_time }} · {{ appointment.doctor }}</p>
@@ -48,8 +48,8 @@ defineProps({
                 <p v-else class="p-6 text-sm text-slate-400">Este paciente no tiene citas registradas.</p>
             </section>
 
-            <section class="rounded-[2rem] border border-white/10 bg-[#162130] p-5">
-                <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Informacion clinica relacionada</p>
+            <section class="rounded-2xl border border-white/10 bg-[#162130] p-4 sm:rounded-[2rem] sm:p-5">
+                <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs">Informacion clinica relacionada</p>
                 <div v-if="clinicalRecords.length" class="mt-4 grid gap-3">
                     <article v-for="record in clinicalRecords" :key="record.id" class="rounded-2xl bg-white/5 p-4">
                         <div class="flex flex-wrap justify-between gap-2">

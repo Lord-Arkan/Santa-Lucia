@@ -44,9 +44,9 @@ const translateLabel = (label) => String(label || '')
     <Head title="Historial clinico" />
 
     <DashboardLayout title="Historial clinico">
-        <div class="grid gap-6">
+        <div class="grid gap-4 sm:gap-6">
             <div class="flex items-center justify-between">
-                <button type="button" class="rounded-2xl bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 hover:bg-white/10" @click="showFilters = !showFilters">
+                <button type="button" class="rounded-xl bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 sm:rounded-2xl sm:text-sm" @click="showFilters = !showFilters">
                     {{ showFilters ? 'Ocultar' : 'Filtros' }}
                 </button>
             </div>
@@ -74,12 +74,12 @@ const translateLabel = (label) => String(label || '')
                 </div>
             </transition>
 
-            <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-[#162130]">
-                <div class="border-b border-white/10 p-5">
-                    <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Pacientes autorizados</p>
+            <section class="overflow-hidden rounded-2xl border border-white/10 bg-[#162130] sm:rounded-[2rem]">
+                <div class="border-b border-white/10 p-4 sm:p-5">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs">Pacientes autorizados</p>
                 </div>
                 <div v-if="props.patients.data.length" class="divide-y divide-white/10">
-                    <article v-for="patient in props.patients.data" :key="patient.patient_id" class="flex flex-wrap items-center justify-between gap-4 p-5">
+                    <article v-for="patient in props.patients.data" :key="patient.patient_id" class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
                         <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-3">
                                 <p class="font-black text-white">{{ patient.name }}</p>
@@ -90,25 +90,25 @@ const translateLabel = (label) => String(label || '')
                             <p class="mt-1 text-sm text-slate-400">{{ patient.document }}</p>
                             <p class="mt-2 text-xs font-semibold text-slate-500">{{ patient.appointments_count }} citas - {{ patient.clinical_records_count }} registros clinicos</p>
                         </div>
-                        <div class="flex gap-2">
-                            <Link :href="route('patients.history', patient.patient_id)" class="rounded-xl border border-sky-300/20 px-3 py-2 text-xs font-black text-sky-200 hover:bg-sky-400/10">Historial</Link>
-                            <Link :href="route('patients.records.index', patient.patient_id)" class="rounded-xl border border-violet-300/20 px-3 py-2 text-xs font-black text-violet-200 hover:bg-violet-400/10">Registros</Link>
+                        <div class="flex flex-wrap gap-2 sm:justify-end">
+                            <Link :href="route('patients.history', patient.patient_id)" class="rounded-lg border border-sky-300/20 px-2.5 py-1.5 text-[11px] font-black text-sky-200 hover:bg-sky-400/10 sm:rounded-xl sm:px-3 sm:py-2 sm:text-xs">Historial</Link>
+                            <Link :href="route('patients.records.index', patient.patient_id)" class="rounded-lg border border-violet-300/20 px-2.5 py-1.5 text-[11px] font-black text-violet-200 hover:bg-violet-400/10 sm:rounded-xl sm:px-3 sm:py-2 sm:text-xs">Registros</Link>
                         </div>
                     </article>
                 </div>
                 <p v-else class="p-6 text-sm text-slate-400">No hay pacientes relacionados disponibles.</p>
             </section>
 
-            <div v-if="props.patients.links" class="flex items-center justify-between px-2 py-4">
+            <div v-if="props.patients.links" class="flex flex-col items-start gap-3 px-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-2 sm:py-4">
                 <div class="text-sm text-slate-400">Mostrando {{ props.patients.from ?? 0 }} - {{ props.patients.to ?? 0 }} de {{ props.patients.total }}</div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <button
                         v-for="link in props.patients.links"
                         :key="link.label + (link.url || '')"
                         v-html="translateLabel(link.label)"
                         :disabled="!link.url"
                         @click.prevent="goTo(link.url)"
-                        class="rounded-md px-3 py-1 text-sm font-bold text-slate-300 hover:bg-white/10 disabled:opacity-40"
+                        class="rounded-md px-2.5 py-1 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-40 sm:px-3 sm:text-sm"
                         :class="link.active ? 'bg-white/10' : ''"
                     ></button>
                 </div>

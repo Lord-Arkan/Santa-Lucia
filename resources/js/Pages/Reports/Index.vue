@@ -19,13 +19,13 @@ const props = defineProps({
 });
 
 const tabs = [
-    { key: 'dashboard', label: 'General' },
-    { key: 'period', label: 'Por periodo' },
-    { key: 'doctor', label: 'Por medico' },
-    { key: 'specialty', label: 'Especialidades' },
-    { key: 'patient', label: 'Historial paciente' },
-    { key: 'absences', label: 'Inasistencias' },
-    { key: 'new_patients', label: 'Pacientes nuevos' },
+    { key: 'dashboard', label: 'General', description: 'Resumen ejecutivo de citas y atencion.' },
+    { key: 'period', label: 'Por periodo', description: 'Evolucion de citas por dia, mes o anio.' },
+    { key: 'doctor', label: 'Por medico', description: 'Carga y resultados por profesional.' },
+    { key: 'specialty', label: 'Especialidades', description: 'Demanda por especialidad medica.' },
+    { key: 'patient', label: 'Historial paciente', description: 'Detalle de citas por paciente.' },
+    { key: 'absences', label: 'Inasistencias', description: 'Cancelaciones y pacientes que no asistieron.' },
+    { key: 'new_patients', label: 'Pacientes nuevos', description: 'Altas de pacientes en el periodo.' },
 ];
 
 const activeTab = ref('dashboard');
@@ -40,14 +40,14 @@ const filters = ref({
 });
 
 const kpis = computed(() => [
-    ['Total citas', props.summary.total_appointments],
-    ['Citas de hoy', props.summary.today_appointments],
-    ['Pendientes', props.summary.pending_appointments],
-    ['Atendidas', props.summary.attended_appointments],
-    ['Canceladas', props.summary.cancelled_appointments],
-    ['Pacientes atendidos', props.summary.attended_patients],
-    ['Medico top', `${props.summary.top_doctor} (${props.summary.top_doctor_total})`],
-    ['Especialidad top', `${props.summary.top_specialty} (${props.summary.top_specialty_total})`],
+    { label: 'Total de citas', value: props.summary.total_appointments, detail: 'Registradas en el periodo', tone: 'teal' },
+    { label: 'Citas de hoy', value: props.summary.today_appointments, detail: 'Dentro del rango actual', tone: 'sky' },
+    { label: 'Pendientes', value: props.summary.pending_appointments, detail: 'Programadas sin atencion', tone: 'amber' },
+    { label: 'Atendidas', value: props.summary.attended_appointments, detail: 'Cerradas correctamente', tone: 'emerald' },
+    { label: 'Canceladas', value: props.summary.cancelled_appointments, detail: 'Canceladas por el flujo', tone: 'rose' },
+    { label: 'Pacientes atendidos', value: props.summary.attended_patients, detail: 'Pacientes unicos atendidos', tone: 'violet' },
+    { label: 'Medico destacado', value: props.summary.top_doctor, detail: `${props.summary.top_doctor_total} citas`, tone: 'cyan' },
+    { label: 'Especialidad destacada', value: props.summary.top_specialty, detail: `${props.summary.top_specialty_total} citas`, tone: 'teal' },
 ]);
 
 const paginatorMap = computed(() => ({
@@ -79,11 +79,37 @@ const statusTotal = computed(() => (props.charts.status ?? []).reduce((sum, item
 const chartPalette = ['#5eead4', '#7dd3fc', '#a7f3d0', '#fcd34d', '#fda4af', '#c4b5fd'];
 
 const activeTabLabel = computed(() => tabs.find((tab) => tab.key === activeTab.value)?.label ?? '');
+const activeTabDescription = computed(() => tabs.find((tab) => tab.key === activeTab.value)?.description ?? '');
 const groupLabel = computed(() => ({
     day: 'Dias',
     month: 'Meses',
     year: 'Anios',
 })[props.filters.group_by] ?? 'Dias');
+
+const dateLabel = (date) => {
+    if (!date) return '';
+    const [year, month, day] = String(date).split('-');
+
+    return [day, month, year].filter(Boolean).join('/');
+};
+
+const rangeLabel = computed(() => `${dateLabel(filters.value.start_date)} - ${dateLabel(filters.value.end_date)}`);
+
+const exportOptions = [
+    { format: 'csv', label: 'CSV', detail: 'Datos planos' },
+    { format: 'xlsx', label: 'Excel', detail: 'Tabla formateada' },
+    { format: 'pdf', label: 'PDF', detail: 'Vista imprimible' },
+];
+
+const kpiToneClass = (tone) => ({
+    teal: 'border-teal-300/20 bg-teal-400/10 text-teal-200',
+    sky: 'border-sky-300/20 bg-sky-400/10 text-sky-200',
+    amber: 'border-amber-300/20 bg-amber-400/10 text-amber-200',
+    emerald: 'border-emerald-300/20 bg-emerald-400/10 text-emerald-200',
+    rose: 'border-rose-300/20 bg-rose-400/10 text-rose-200',
+    violet: 'border-violet-300/20 bg-violet-400/10 text-violet-200',
+    cyan: 'border-cyan-300/20 bg-cyan-400/10 text-cyan-200',
+}[tone] ?? 'border-white/10 bg-white/5 text-slate-200');
 
 const statusSegments = computed(() => {
     let offset = 25;
@@ -189,22 +215,47 @@ const statusClass = (status) => {
     <Head title="Reportes" />
 
     <DashboardLayout>
-        <div class="grid min-w-0 max-w-full gap-6 overflow-hidden">
-            <div class="flex min-w-0 flex-wrap items-center justify-between gap-3">
-                <button type="button" class="rounded-2xl bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 hover:bg-white/10" @click="showFilters = !showFilters">
-                    {{ showFilters ? 'Ocultar' : 'Filtros' }}
-                </button>
+        <div class="grid min-w-0 max-w-full gap-4 overflow-hidden sm:gap-6">
+            <section class="rounded-2xl border border-white/10 bg-[#162130] p-4 shadow-xl shadow-slate-950/10 sm:rounded-[2rem] sm:p-5">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-teal-300">Centro de reportes</p>
+                        <h2 class="mt-2 text-xl font-black text-white sm:text-2xl">Reportes clinicos y operativos</h2>
+                        <p class="mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-400">
+                            {{ activeTabDescription }} Periodo: {{ rangeLabel }}.
+                        </p>
+                    </div>
 
-                <div class="flex min-w-0 flex-wrap gap-2">
-                    <button type="button" class="h-10 rounded-2xl border border-emerald-300/20 px-4 text-sm font-black text-emerald-200" @click="exportReport('csv')">CSV</button>
-                    <button type="button" class="h-10 rounded-2xl border border-sky-300/20 px-4 text-sm font-black text-sky-200" @click="exportReport('xlsx')">Excel</button>
-                    <button type="button" class="h-10 rounded-2xl border border-rose-300/20 px-4 text-sm font-black text-rose-200" @click="exportReport('pdf')">PDF</button>
-                    <button type="button" class="h-10 rounded-2xl border border-white/10 px-4 text-sm font-black text-slate-300" @click="printReport">Imprimir</button>
+                    <button type="button" class="w-full rounded-xl bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 sm:w-auto sm:rounded-2xl sm:text-sm" @click="showFilters = !showFilters">
+                        {{ showFilters ? 'Ocultar filtros' : 'Filtros' }}
+                    </button>
                 </div>
-            </div>
+
+                <div class="mt-5 grid gap-2 sm:grid-cols-3 xl:grid-cols-[repeat(3,minmax(160px,1fr))_auto]">
+                    <button
+                        v-for="option in exportOptions"
+                        :key="option.format"
+                        type="button"
+                        class="flex items-center justify-between rounded-xl border border-white/10 bg-slate-950/25 px-3 py-3 text-left transition hover:border-teal-300/30 hover:bg-teal-400/10"
+                        @click="exportReport(option.format)"
+                    >
+                        <span>
+                            <span class="block text-xs font-black uppercase tracking-[0.14em] text-white">{{ option.label }}</span>
+                            <span class="mt-1 block text-[11px] font-semibold text-slate-500">{{ option.detail }}</span>
+                        </span>
+                        <svg viewBox="0 0 24 24" class="size-4 text-teal-200" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" aria-hidden="true">
+                            <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" />
+                        </svg>
+                    </button>
+
+                    <button type="button" class="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs font-black text-slate-300 transition hover:bg-white/10 xl:min-w-32" @click="printReport">
+                        Imprimir vista
+                    </button>
+                </div>
+            </section>
 
             <transition name="fade">
-                <section v-show="showFilters" class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5 shadow-xl shadow-slate-950/10">
+                <section v-show="showFilters" class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-4 shadow-xl shadow-slate-950/10 sm:rounded-[2rem] sm:p-5">
                     <form class="grid gap-3 lg:grid-cols-6" @submit.prevent="applyFilters">
                         <label class="block">
                             <span class="block text-xs font-bold text-slate-400">Inicio</span>
@@ -251,7 +302,7 @@ const statusClass = (status) => {
                     v-for="tab in tabs"
                     :key="tab.key"
                     type="button"
-                    class="shrink-0 rounded-2xl border px-4 py-2 text-xs font-black transition"
+                    class="shrink-0 rounded-xl border px-3 py-2 text-[11px] font-black transition sm:rounded-2xl sm:px-4 sm:text-xs"
                     :class="activeTab === tab.key ? 'border-teal-300/30 bg-teal-400/15 text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'"
                     @click="setTab(tab.key)"
                 >
@@ -262,14 +313,18 @@ const statusClass = (status) => {
 
             <template v-if="activeTab === 'dashboard'">
                 <section class="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                    <article v-for="[label, value] in kpis" :key="label" class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-5">
-                        <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{{ label }}</p>
-                        <p class="mt-3 break-words text-2xl font-black text-white">{{ value }}</p>
+                    <article v-for="item in kpis" :key="item.label" class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-4 sm:p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{{ item.label }}</p>
+                            <span :class="['size-2.5 shrink-0 rounded-full border', kpiToneClass(item.tone)]"></span>
+                        </div>
+                        <p class="mt-3 break-words text-2xl font-black text-white">{{ item.value }}</p>
+                        <p class="mt-2 text-xs font-semibold text-slate-500">{{ item.detail }}</p>
                     </article>
                 </section>
 
                 <section class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-                    <article class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
+                    <article class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-4 sm:rounded-[2rem] sm:p-5">
                         <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Estados</p>
                         <div class="mt-5 grid gap-5 sm:grid-cols-[180px_1fr] xl:grid-cols-1 2xl:grid-cols-[180px_1fr]">
                             <div class="relative mx-auto size-44">
@@ -308,7 +363,7 @@ const statusClass = (status) => {
                         </div>
                     </article>
 
-                    <article class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
+                    <article class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-4 sm:rounded-[2rem] sm:p-5">
                         <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Especialidades</p>
                         <div class="mt-5 grid gap-3">
                             <div v-for="(item, index) in props.charts.specialties" :key="item.specialty" class="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
@@ -325,7 +380,7 @@ const statusClass = (status) => {
                     </article>
                 </section>
 
-                <section class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
+                <section class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-4 sm:rounded-[2rem] sm:p-5">
                     <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Tendencia por periodo</p>
                     <div class="mt-5 rounded-2xl border border-white/10 bg-slate-950/30 p-4">
                         <svg viewBox="0 0 320 170" class="h-56 w-full sm:h-64" preserveAspectRatio="none">
@@ -347,7 +402,7 @@ const statusClass = (status) => {
                     </div>
                 </section>
 
-                <section class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5">
+                <section class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-4 sm:rounded-[2rem] sm:p-5">
                     <p class="text-xs font-bold uppercase tracking-[0.2em] text-teal-300">Barras por periodo</p>
                     <div class="mt-5 flex h-64 max-w-full items-end gap-2 overflow-x-auto">
                             <div v-for="item in props.charts.period" :key="item.period" class="flex min-w-14 flex-1 flex-col items-center gap-2">
@@ -374,7 +429,7 @@ const statusClass = (status) => {
                     </article>
                 </section>
 
-                <section class="min-w-0 rounded-[2rem] border border-white/10 bg-[#162130] p-5 shadow-xl shadow-slate-950/10">
+                <section class="min-w-0 rounded-2xl border border-white/10 bg-[#162130] p-4 shadow-xl shadow-slate-950/10 sm:rounded-[2rem] sm:p-5">
                     <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">{{ activeTabLabel }}</p>
                         <input v-model="localSearch" type="search" class="h-10 rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none md:w-72" placeholder="Buscar en resultados">
@@ -422,16 +477,16 @@ const statusClass = (status) => {
                     <p v-if="!rows.length" class="py-10 text-center text-sm font-semibold text-slate-500">No existen registros para los filtros seleccionados.</p>
                 </section>
 
-                <div v-if="currentPaginator?.links" class="flex flex-wrap items-center justify-between gap-3 px-2 py-4">
+                <div v-if="currentPaginator?.links" class="flex flex-col items-start gap-3 px-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-2 sm:py-4">
                     <div class="text-sm text-slate-400">Mostrando {{ currentPaginator.from ?? 0 }} - {{ currentPaginator.to ?? 0 }} de {{ currentPaginator.total }}</div>
-                    <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         <button
                             v-for="link in currentPaginator.links"
                             :key="link.label + (link.url || '')"
                             v-html="translateLabel(link.label)"
                             :disabled="!link.url"
                             @click.prevent="goTo(link.url)"
-                            class="rounded-md px-3 py-1 text-sm font-bold text-slate-300 hover:bg-white/10 disabled:opacity-40"
+                            class="rounded-md px-2.5 py-1 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-40 sm:px-3 sm:text-sm"
                             :class="link.active ? 'bg-white/10' : ''"
                         ></button>
                     </div>

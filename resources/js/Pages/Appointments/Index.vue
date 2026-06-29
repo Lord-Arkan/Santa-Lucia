@@ -122,14 +122,14 @@ const clearFilters = () => {
     <DashboardLayout>
         <!-- status flash moved to global toast Banner component -->
 
-        <div class="grid gap-6">
+        <div class="grid gap-4 sm:gap-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <button type="button" class="rounded-2xl bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 hover:bg-white/10" @click="showFilters = !showFilters">{{ showFilters ? 'Ocultar' : 'Filtros' }}</button>
+                    <button type="button" class="rounded-xl bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 sm:rounded-2xl sm:text-sm" @click="showFilters = !showFilters">{{ showFilters ? 'Ocultar' : 'Filtros' }}</button>
                 </div>
 
                 <div class="flex justify-end">
-                    <button type="button" class="rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-400 px-4 py-2 text-sm font-black text-slate-950 shadow-lg hover:opacity-95" @click="openCreate">+ Nuevo</button>
+                    <button type="button" class="rounded-xl bg-gradient-to-r from-teal-400 to-cyan-400 px-3 py-2 text-xs font-black text-slate-950 shadow-lg hover:opacity-95 sm:rounded-2xl sm:px-4 sm:text-sm" @click="openCreate">+ Nuevo</button>
                 </div>
             </div>
 
@@ -154,10 +154,10 @@ const clearFilters = () => {
 
             <AppointmentTable :appointments="props.appointments.data" @cancel="cancelAppointment" @updateStatus="updateStatus" @show="openShow" />
 
-            <div v-if="props.appointments.links" class="flex items-center justify-between px-2 py-4">
+            <div v-if="props.appointments.links" class="flex flex-col items-start gap-3 px-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-2 sm:py-4">
                 <div class="text-sm text-slate-400">Mostrando {{ props.appointments.from }} - {{ props.appointments.to }} de {{ props.appointments.total }}</div>
-                <div class="flex items-center gap-2">
-                    <button v-for="link in props.appointments.links" :key="link.label + (link.url || '')" v-html="link.label" :disabled="!link.url" @click.prevent="goTo(link.url)" class="rounded-md px-3 py-1 text-sm font-bold text-slate-300 hover:bg-white/10 disabled:opacity-40" :class="link.active ? 'bg-white/10' : ''"></button>
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <button v-for="link in props.appointments.links" :key="link.label + (link.url || '')" v-html="link.label" :disabled="!link.url" @click.prevent="goTo(link.url)" class="rounded-md px-2.5 py-1 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-40 sm:px-3 sm:text-sm" :class="link.active ? 'bg-white/10' : ''"></button>
                 </div>
             </div>
 

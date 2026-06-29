@@ -1,7 +1,5 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
-
-import { patientService } from '@/services/patientService';
+import RowActionMenu from '@/Components/ui/RowActionMenu.vue';
 
 defineProps({
     patients: {
@@ -24,15 +22,51 @@ defineProps({
 
 const emit = defineEmits(['edit', 'delete', 'toggle', 'addRecord']);
 
+const patientActions = (patient, canManage, canAddClinicalRecords) => [
+    { key: 'history', label: 'Historial', tone: 'info', href: route('patients.history', patient.patient_id) },
+    { key: 'addRecord', label: 'Añadir registro', tone: 'success', visible: canAddClinicalRecords },
+    { key: 'records', label: 'Registros', tone: 'violet', href: route('patients.records.index', patient.patient_id) },
+    { key: 'toggle', label: patient.status === 'activo' ? 'Inhabilitar' : 'Habilitar', tone: patient.status === 'activo' ? 'warning' : 'success', visible: canManage },
+    { key: 'edit', label: 'Editar', visible: canManage },
+    { key: 'delete', label: 'Eliminar', tone: 'danger', visible: canManage },
+];
+
+const handleAction = (patient, action) => {
+    if (action.href) return;
+    emit(action.key, patient);
+};
+
 </script>
 
 <template>
-    <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-[#162130] shadow-xl shadow-slate-950/10">
-        <div class="border-b border-white/10 p-5">
-            <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">Pacientes</p>
+    <section class="rounded-2xl border border-white/10 bg-[#162130] shadow-xl shadow-slate-950/10 sm:rounded-[2rem]">
+        <div class="border-b border-white/10 p-4 sm:p-5">
+            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs sm:tracking-[0.24em]">Pacientes</p>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="grid gap-3 p-3 sm:hidden">
+            <article v-for="patient in patients" :key="patient.patient_id" class="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
+                <div class="flex items-start gap-3">
+                    <span :class="['grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-xs font-black', patient.status === 'inactivo' ? 'text-rose-200' : 'text-white']">
+                        {{ (patient.first_name || '').slice(0,1).toUpperCase() }}{{ (patient.last_name || '').slice(0,1).toUpperCase() }}
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <p :class="['truncate text-sm font-black', patient.status === 'inactivo' ? 'text-rose-400' : 'text-white']">{{ patient.first_name }} {{ patient.last_name }}</p>
+                        <p :class="['mt-1 truncate text-xs font-semibold', patient.status === 'inactivo' ? 'text-rose-300' : 'text-slate-400']">{{ patient.email }}</p>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold">
+                    <p :class="patient.status === 'inactivo' ? 'text-rose-300' : 'text-slate-400'"><span class="block text-slate-500">Documento</span>{{ patient.document_type }} {{ patient.document_number }}</p>
+                    <p :class="patient.status === 'inactivo' ? 'text-rose-300' : 'text-slate-400'"><span class="block text-slate-500">Alta</span>{{ patient.created_at }}</p>
+                </div>
+                <div class="mt-3 flex justify-end">
+                    <RowActionMenu :actions="patientActions(patient, canManage, canAddClinicalRecords)" @select="handleAction(patient, $event)" />
+                </div>
+            </article>
+            <p v-if="!patients.length" class="py-6 text-center text-sm font-semibold text-slate-500">No hay pacientes registrados.</p>
+        </div>
+
+        <div class="hidden overflow-x-auto sm:block">
             <table class="min-w-[820px] w-full text-left">
                 <thead class="bg-slate-950/30 text-xs uppercase tracking-[0.16em] text-slate-500">
                     <tr>
@@ -60,40 +94,8 @@ const emit = defineEmits(['edit', 'delete', 'toggle', 'addRecord']);
                         </td>
                         <td :class="['px-5 py-4 text-sm font-semibold', patient.status === 'inactivo' ? 'text-rose-300' : 'text-slate-400']">{{ patient.created_at }}</td>
                         <td class="px-5 py-4">
-                            <div class="flex justify-end gap-2">
-                                <Link :href="route('patients.history', patient.patient_id)" class="rounded-xl border border-sky-300/20 px-3 py-2 text-xs font-black text-sky-200 hover:bg-sky-400/10">Historial</Link>
-                                <button v-if="canAddClinicalRecords" type="button" class="rounded-xl border border-teal-300/20 px-3 py-2 text-xs font-black text-teal-200 hover:bg-teal-400/10" @click="$emit('addRecord', patient)">Añadir registro</button>
-                                <Link :href="route('patients.records.index', patient.patient_id)" class="rounded-xl border border-violet-300/20 px-3 py-2 text-xs font-black text-violet-200 hover:bg-violet-400/10">Registros</Link>
-                                <button
-                                    v-if="canManage"
-                                    type="button"
-                                    :class="[
-                                        'rounded-xl border px-3 py-2 text-xs font-black transition',
-                                        patient.status === 'activo'
-                                            ? 'border-amber-300/20 text-amber-200 hover:bg-amber-400/10'
-                                            : 'border-emerald-300/20 text-emerald-200 hover:bg-emerald-400/10'
-                                    ]"
-                                    @click="$emit('toggle', patient)"
-                                >
-                                    {{ patient.status === 'activo' ? 'Inhabilitar' : 'Habilitar' }}
-                                </button>
-                                <button
-                                    v-if="canManage"
-                                    type="button"
-                                    class="rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-slate-300 transition hover:bg-white/10 hover:text-white"
-                                    @click="$emit('edit', patient)"
-                                >
-                                    Editar
-                                </button>
-
-                                <button
-                                    v-if="canManage"
-                                    type="button"
-                                    class="rounded-xl border border-rose-300/20 px-3 py-2 text-xs font-black text-rose-200 transition hover:bg-rose-400/10"
-                                    @click="$emit('delete', patient)"
-                                >
-                                    Eliminar
-                                </button>
+                            <div class="flex justify-end">
+                                <RowActionMenu :actions="patientActions(patient, canManage, canAddClinicalRecords)" @select="handleAction(patient, $event)" />
                             </div>
                         </td>
                     </tr>

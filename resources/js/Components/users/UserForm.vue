@@ -36,7 +36,7 @@ watch(() => props.editingUser, () => {
 </script>
 
 <template>
-    <form class="relative rounded-[2rem] border border-white/10 bg-[#162130] p-5 shadow-xl shadow-slate-950/10" @submit.prevent="$emit('submit')">
+    <form class="relative rounded-2xl border border-white/10 bg-[#162130] p-4 shadow-xl shadow-slate-950/10 sm:rounded-[2rem] sm:p-5" @submit.prevent="$emit('submit')">
         <button
             type="button"
             @click="$emit('cancel')"

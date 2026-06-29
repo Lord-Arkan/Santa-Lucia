@@ -25,20 +25,20 @@ const onCancel = () => {
 </script>
 
 <template>
-    <DialogModal :show="show" :max-width="maxWidth" :closeable="true" boxed box-class="bg-slate-950" @close="close">
+    <DialogModal :show="show" :max-width="maxWidth" :closeable="true" boxed box-class="bg-slate-950 max-w-[340px] mx-auto sm:max-w-none" @close="close">
         <template #title>
-            {{ title }}
+            <h3 class="text-base font-black text-white sm:text-lg">{{ title }}</h3>
         </template>
 
         <template #content>
-            <p class="text-sm text-slate-300">{{ message }}</p>
+            <p class="text-xs leading-5 text-slate-300 sm:text-sm sm:leading-6">{{ message }}</p>
         </template>
 
         <template #footer>
-            <div class="flex items-center gap-2">
+            <div class="flex w-full items-center justify-end gap-2">
                 <button
                     type="button"
-                    class="rounded-2xl border border-white/10 px-4 py-2 text-sm font-black text-slate-300"
+                    class="rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-slate-300 sm:rounded-2xl sm:px-4 sm:text-sm"
                     @click="onCancel"
                 >
                     {{ cancelText }}
@@ -47,7 +47,7 @@ const onCancel = () => {
                 <button
                     type="button"
                     :class="[
-                        'rounded-2xl px-4 py-2 text-sm font-black',
+                        'rounded-xl px-3 py-2 text-xs font-black sm:rounded-2xl sm:px-4 sm:text-sm',
                         danger ? 'bg-rose-500 text-white' : 'bg-teal-400 text-slate-950'
                     ]"
                     @click="onConfirm"

@@ -1,19 +1,53 @@
 <script setup>
+import RowActionMenu from '@/Components/ui/RowActionMenu.vue';
+
 const props = defineProps({
     schedules: { type: Array, required: true },
     isDoctorView: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['edit', 'delete', 'toggle']);
+
+const scheduleActions = (schedule) => [
+    { key: 'edit', label: 'Editar', visible: !schedule.locked },
+    { key: 'toggle', label: schedule.status === 'activo' ? 'Inhabilitar' : 'Habilitar', tone: schedule.status === 'activo' ? 'danger' : 'success', visible: !schedule.locked },
+    { key: 'delete', label: 'Eliminar', tone: 'danger', visible: !schedule.locked },
+];
+
+const handleAction = (schedule, action) => {
+    emit(action.key, schedule);
+};
 </script>
 
 <template>
-    <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-[#162130] shadow-xl shadow-slate-950/10">
-        <div class="border-b border-white/10 p-5">
-            <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">Horarios</p>
+    <section class="rounded-2xl border border-white/10 bg-[#162130] shadow-xl shadow-slate-950/10 sm:rounded-[2rem]">
+        <div class="border-b border-white/10 p-4 sm:p-5">
+            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs sm:tracking-[0.24em]">Horarios</p>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="grid gap-3 p-3 sm:hidden">
+            <article v-for="s in schedules" :key="s.schedule_id" class="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-black text-white">{{ s.day_of_week }}</p>
+                        <p v-if="!isDoctorView" class="mt-1 truncate text-xs font-semibold text-slate-400">{{ s.doctor_name }}</p>
+                    </div>
+                    <span :class="['shrink-0 rounded-full px-2.5 py-1 text-[10px] font-black', s.status === 'activo' ? 'bg-emerald-300/10 text-emerald-200' : 'bg-rose-300/10 text-rose-200']">{{ s.status === 'activo' ? 'Activo' : 'Inactivo' }}</span>
+                </div>
+                <div class="mt-3 grid grid-cols-3 gap-2 text-xs font-semibold text-slate-400">
+                    <p><span class="block text-slate-500">Inicio</span>{{ s.start_time }}</p>
+                    <p><span class="block text-slate-500">Fin</span>{{ s.end_time }}</p>
+                    <p><span class="block text-slate-500">Alta</span>{{ s.created_at }}</p>
+                </div>
+                <div class="mt-3 flex flex-wrap items-center justify-end gap-2">
+                    <RowActionMenu v-if="!s.locked" :actions="scheduleActions(s)" @select="handleAction(s, $event)" />
+                    <span v-if="s.locked" class="text-[11px] font-semibold text-rose-300">Tiene citas pendientes</span>
+                </div>
+            </article>
+            <p v-if="!schedules.length" class="py-6 text-center text-sm font-semibold text-slate-500">No hay horarios registrados.</p>
+        </div>
+
+        <div class="hidden overflow-x-auto sm:block">
             <table class="min-w-[820px] w-full text-left">
                 <thead class="bg-slate-950/30 text-xs uppercase tracking-[0.16em] text-slate-500">
                     <tr>
@@ -37,10 +71,8 @@ const emit = defineEmits(['edit', 'delete', 'toggle']);
                         <td class="px-5 py-4"><span :class="['rounded-full px-3 py-1.5 text-xs font-black', s.status === 'activo' ? 'bg-emerald-300/10 text-emerald-200' : 'bg-rose-300/10 text-rose-200']">{{ s.status === 'activo' ? 'Activo' : 'Inactivo' }}</span></td>
                         <td class="px-5 py-4 text-sm font-semibold text-slate-400">{{ s.created_at }}</td>
                         <td class="px-5 py-4">
-                            <div class="flex justify-end gap-2">
-                                <button v-if="!s.locked" type="button" class="rounded-xl border px-3 py-2 text-xs font-black text-slate-300 transition hover:bg-white/10 hover:text-white" @click="$emit('edit', s)">Editar</button>
-                                <button v-if="!s.locked" type="button" :class="['rounded-xl border px-3 py-2 text-xs font-black transition', s.status === 'activo' ? 'border-rose-300/20 text-rose-200 hover:bg-rose-400/10' : 'border-emerald-300/20 text-emerald-200 hover:bg-emerald-400/10']" @click="$emit('toggle', s)">{{ s.status === 'activo' ? 'Inhabilitar' : 'Habilitar' }}</button>
-                                <button v-if="!s.locked" type="button" class="rounded-xl border border-rose-300/20 px-3 py-2 text-xs font-black text-rose-200 transition hover:bg-rose-400/10" @click="$emit('delete', s)">Eliminar</button>
+                            <div class="flex justify-end">
+                                <RowActionMenu v-if="!s.locked" :actions="scheduleActions(s)" @select="handleAction(s, $event)" />
                                 <template v-if="s.locked">
                                     <span class="ml-2 text-[11px] font-semibold text-rose-300">Tiene citas pendientes</span>
                                 </template>

@@ -43,7 +43,7 @@ const close = () => {
         @close="close"
     >
         <template v-if="props.boxed">
-            <div :class="['relative rounded-[2rem] border border-white/10 p-6 shadow-xl', props.boxClass]">
+            <div :class="['relative rounded-2xl border border-white/10 p-4 shadow-xl sm:rounded-[2rem] sm:p-6', props.boxClass]">
                 <div v-if="$slots.title" :class="['text-lg font-medium', props.white ? 'text-slate-900' : 'text-slate-100']">
                     <slot name="title" />
                 </div>
@@ -59,7 +59,7 @@ const close = () => {
         </template>
 
         <template v-else>
-            <div class="px-6 py-4">
+            <div class="px-3 py-3 sm:px-6 sm:py-4">
                 <div v-if="$slots.title" :class="['text-lg font-medium', props.white ? 'text-slate-900' : 'text-slate-100']">
                     <slot name="title" />
                 </div>
@@ -69,7 +69,7 @@ const close = () => {
                 </div>
             </div>
 
-            <div :class="['flex flex-row justify-end px-6 py-4 bg-transparent text-end', props.white ? 'text-slate-700' : 'text-slate-300']">
+            <div :class="['flex flex-row justify-end bg-transparent px-3 py-3 text-end sm:px-6 sm:py-4', props.white ? 'text-slate-700' : 'text-slate-300']">
                 <slot name="footer" />
             </div>
         </template>

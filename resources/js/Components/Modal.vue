@@ -70,7 +70,7 @@ const maxWidthClass = computed(() => {
 
 <template>
     <div v-show="show" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen text-center sm:block sm:p-0">
+        <div class="flex min-h-screen items-center justify-center px-3 py-4 text-center sm:block sm:p-0">
             <transition
                 enter-active-class="ease-out duration-300"
                 enter-from-class="opacity-0"
@@ -93,7 +93,7 @@ const maxWidthClass = computed(() => {
                 leave-from-class="opacity-100 translate-y-0 sm:scale-100"
                 leave-to-class="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-                <div v-show="show" ref="dialog" class="inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:align-middle sm:w-full" :class="maxWidthClass" @click.stop>
+                <div v-show="show" ref="dialog" class="inline-block w-full max-w-full align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:align-middle" :class="maxWidthClass" @click.stop>
                     <slot v-if="showSlot" />
                 </div>
             </transition>

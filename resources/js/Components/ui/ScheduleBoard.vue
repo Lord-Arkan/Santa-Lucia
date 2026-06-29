@@ -66,17 +66,17 @@ const goToWeek = (iso) => {
 </script>
 
 <template>
-    <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-[#162130] shadow-2xl shadow-slate-950/20" aria-label="Calendario de citas">
-        <div class="border-b border-white/10 bg-gradient-to-r from-teal-500/15 via-cyan-500/10 to-transparent p-5 sm:p-6">
-            <div class="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+    <section class="overflow-hidden rounded-2xl border border-white/10 bg-[#162130] shadow-2xl shadow-slate-950/20 sm:rounded-[2rem]" aria-label="Calendario de citas">
+        <div class="border-b border-white/10 bg-gradient-to-r from-teal-500/15 via-cyan-500/10 to-transparent p-4 sm:p-6">
+            <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
                 <div class="min-w-0">
-                    <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">Agenda principal</p>
-                    <h5 class="mt-2 text-2xl font-black text-white sm:text-3xl">{{ title }}</h5>
+                    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs sm:tracking-[0.24em]">Agenda principal</p>
+                    <h5 class="mt-1.5 text-xl font-black leading-tight text-white sm:mt-2 sm:text-3xl">{{ title }}</h5>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2 sm:gap-3">
                     <button
-                        class="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white disabled:opacity-40"
+                        class="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white disabled:opacity-40 sm:size-auto sm:rounded-2xl sm:px-3 sm:py-2"
                         type="button"
                         :disabled="!prevStartIso"
                         aria-label="Semana anterior"
@@ -85,12 +85,12 @@ const goToWeek = (iso) => {
                         &lt;
                     </button>
 
-                    <div class="rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-400 px-4 py-2.5 text-sm font-black text-slate-950 shadow-lg shadow-cyan-500/20">
+                    <div class="min-w-0 rounded-xl bg-gradient-to-r from-teal-400 to-cyan-400 px-3 py-2 text-center text-xs font-black text-slate-950 shadow-lg shadow-cyan-500/20 sm:rounded-2xl sm:px-4 sm:py-2.5 sm:text-sm">
                         {{ schedule.rangeLabel }}
                     </div>
 
                     <button
-                        class="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white disabled:opacity-40"
+                        class="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white disabled:opacity-40 sm:size-auto sm:rounded-2xl sm:px-3 sm:py-2"
                         type="button"
                         :disabled="!nextStartIso"
                         aria-label="Semana siguiente"
@@ -103,38 +103,38 @@ const goToWeek = (iso) => {
         </div>
 
         <div class="grid min-w-0 gap-0 xl:grid-cols-[minmax(0,1fr)_minmax(260px,300px)]">
-            <div class="min-w-0 p-4 sm:p-6">
+            <div class="min-w-0 p-3 sm:p-6">
                 <div class="w-full overflow-x-auto pb-2">
-                    <div class="grid min-w-[720px] grid-cols-6 gap-3 lg:min-w-0">
+                    <div class="grid grid-flow-col grid-cols-none auto-cols-[minmax(132px,40vw)] gap-2 sm:auto-cols-[minmax(160px,34vw)] sm:gap-3 lg:min-w-0 lg:grid-flow-row lg:grid-cols-6 lg:auto-cols-auto">
                         <article
                             v-for="day in calendarDays"
                             :key="day.day"
-                            class="min-h-[260px] rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4 xl:min-h-[360px]"
+                            class="min-h-[190px] rounded-2xl border border-white/10 bg-slate-950/35 p-3 sm:min-h-[240px] sm:rounded-[1.5rem] sm:p-4 xl:min-h-[360px]"
                         >
                             <div class="flex items-center justify-between gap-2">
                                 <div class="min-w-0">
-                                    <p class="truncate text-xs font-bold uppercase tracking-[0.12em] text-slate-500">{{ day.day }}</p>
-                                    <p class="mt-1 text-2xl font-black text-white sm:text-3xl">{{ day.date }}</p>
+                                    <p class="truncate text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500 sm:text-xs">{{ day.day }}</p>
+                                    <p class="mt-1 text-xl font-black text-white sm:text-3xl">{{ day.date }}</p>
                                 </div>
-                                <span class="shrink-0 rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-bold text-teal-200">
+                                <span class="shrink-0 rounded-full bg-white/5 px-2 py-1 text-[10px] font-bold text-teal-200 sm:px-2.5 sm:text-[11px]">
                                     {{ day.appointments.length }} citas
                                 </span>
                             </div>
 
-                            <div class="mt-5 space-y-3">
+                            <div class="mt-4 space-y-2 sm:mt-5 sm:space-y-3">
                                 <div
                                     v-for="appointment in day.appointments"
                                     :key="appointment.id"
-                                    class="rounded-2xl bg-gradient-to-br p-3 shadow-lg shadow-slate-950/20"
+                                    class="rounded-xl bg-gradient-to-br p-2.5 shadow-lg shadow-slate-950/20 sm:rounded-2xl sm:p-3"
                                     :class="appointment.tone"
                                 >
                                     <p class="text-xs font-black opacity-80">{{ appointment.time }}</p>
-                                    <p class="mt-2 text-sm font-black leading-tight">{{ appointment.patient }}</p>
-                                    <p class="mt-2 text-[11px] font-bold opacity-75">Consulta programada</p>
+                                    <p class="mt-1.5 text-xs font-black leading-tight sm:mt-2 sm:text-sm">{{ appointment.patient }}</p>
+                                    <p class="mt-1.5 text-[10px] font-bold opacity-75 sm:mt-2 sm:text-[11px]">Consulta programada</p>
                                 </div>
 
-                                <div v-if="day.appointments.length === 0" class="rounded-2xl border border-dashed border-white/10 p-4 text-center">
-                                    <p class="text-sm font-bold text-slate-500">Disponible</p>
+                                <div v-if="day.appointments.length === 0" class="rounded-xl border border-dashed border-white/10 p-3 text-center sm:rounded-2xl sm:p-4">
+                                    <p class="text-xs font-bold text-slate-500 sm:text-sm">Disponible</p>
                                     <p class="mt-1 text-xs text-slate-600">Sin citas asignadas</p>
                                 </div>
                             </div>
@@ -143,25 +143,25 @@ const goToWeek = (iso) => {
                 </div>
             </div>
 
-            <aside class="border-t border-white/10 bg-slate-950/25 p-5 xl:border-l xl:border-t-0">
-                <div class="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+            <aside class="border-t border-white/10 bg-slate-950/25 p-3 sm:p-5 xl:border-l xl:border-t-0">
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-4 sm:rounded-[1.5rem] sm:p-5">
                     <p class="text-sm font-black text-white">Resumen semanal</p>
-                    <div class="mt-5 grid grid-cols-2 gap-3">
-                        <div class="rounded-2xl bg-teal-400/10 p-4 text-center">
-                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-teal-300">Total</p>
+                    <div class="mt-4 grid grid-cols-2 gap-2 sm:mt-5 sm:gap-3">
+                        <div class="rounded-xl bg-teal-400/10 p-3 text-center sm:rounded-2xl sm:p-4">
+                            <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-teal-300 sm:text-xs">Total</p>
                             <p class="mt-2 text-xl font-black text-white">{{ totalAppointments }}</p>
                         </div>
-                        <div class="rounded-2xl bg-cyan-400/10 p-4">
-                            <p class="text-xs font-bold uppercase tracking-[0.16em] text-cyan-300">Mayor carga</p>
+                        <div class="rounded-xl bg-cyan-400/10 p-3 sm:rounded-2xl sm:p-4">
+                            <p class="text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-300 sm:text-xs">Mayor carga</p>
                             <p class="mt-2 text-center text-xl font-black text-white">{{ busiestDay.day }}</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-5 rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+                <div class="mt-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:mt-5 sm:rounded-[1.5rem] sm:p-5">
                     <div class="flex items-center justify-between">
                         <p class="text-sm font-black text-white">Proximas citas</p>
-                        <span class="rounded-full bg-teal-400/10 px-3 py-1 text-xs font-bold text-teal-200">Hoy</span>
+                        <span class="rounded-full bg-teal-400/10 px-2.5 py-1 text-[11px] font-bold text-teal-200 sm:px-3 sm:text-xs">Hoy</span>
                     </div>
 
                     <ul class="mt-4 space-y-3">

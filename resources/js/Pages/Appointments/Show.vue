@@ -34,10 +34,10 @@ const goBack = () => router.get(route('appointments.index'));
   <Head title="Detalle de cita" />
 
   <DashboardLayout>
-  <div class="grid gap-6 max-w-6xl mx-auto px-4">
-      <div class="flex items-center justify-between">
+  <div class="mx-auto grid max-w-6xl gap-4 sm:gap-6">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 class="text-2xl font-black text-white">Detalle de cita</h2>
+          <h2 class="text-xl font-black text-white sm:text-2xl">Detalle de cita</h2>
           <p class="text-sm text-slate-400">Vista ordenada estilo factura para una lectura rápida.</p>
         </div>
 
@@ -46,19 +46,19 @@ const goBack = () => router.get(route('appointments.index'));
         </div>
       </div>
 
-      <section class="overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-950/25 p-6">
-        <div class="flex flex-col gap-6">
+      <section class="overflow-hidden rounded-2xl border border-white/10 bg-slate-950/25 p-4 sm:rounded-[1.5rem] sm:p-6">
+        <div class="flex flex-col gap-5 sm:gap-6">
 
           <!-- Servicio (arriba) -->
           <div class="w-full">
-            <div class="flex items-start justify-between">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <p class="text-xs font-bold text-slate-400 uppercase">Servicio</p>
                 <h3 class="mt-2 text-xl lg:text-2xl font-black text-white">{{ service.name ?? '-' }}</h3>
                 <p class="mt-1 text-sm text-slate-400">Doctor: {{ doctor.name ?? '-' }} · {{ doctor.specialty ?? '-' }}</p>
               </div>
 
-              <div class="flex flex-col items-end text-sm text-slate-400">
+              <div class="flex flex-col items-start text-sm text-slate-400 sm:items-end">
                 <div class="flex items-center gap-3">
                   <span :class="['rounded-full px-3 py-1.5 text-xs font-black', statusClass(props.appointment.status)]">{{ props.appointment.status_label }}</span>
                 </div>

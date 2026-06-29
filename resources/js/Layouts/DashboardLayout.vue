@@ -17,6 +17,7 @@ const props = defineProps({
 const { user } = useAuth();
 const isSidebarCollapsed = ref(false);
 const isSettingsOpen = ref(false);
+const isMobileMenuOpen = ref(false);
 const searchQuery = ref('');
 const searchResults = ref([]);
 const searchLoading = ref(false);
@@ -69,6 +70,10 @@ const isRouteActive = (routeName) => {
 
 const toggleSidebar = () => {
     isSidebarCollapsed.value = !isSidebarCollapsed.value;
+};
+
+const toggleMobileMenu = () => {
+    isMobileMenuOpen.value = !isMobileMenuOpen.value;
 };
 
 const logout = () => {
@@ -136,6 +141,8 @@ onMounted(() => {
 // a una que no pertenezca a settings.
 const page = usePage();
 watch(() => page.url, () => {
+    isMobileMenuOpen.value = false;
+
     try {
         const activeSettings = settingsItems.value.some((i) => isRouteActive(i.routeName));
         if (!activeSettings) {
@@ -275,32 +282,66 @@ watch(isSettingsOpen, (value) => {
         </aside>
 
         <section class="min-w-0 max-w-full overflow-x-hidden bg-[#101824]">
-            <header class="sticky top-0 z-20 border-b border-white/10 bg-[#101824]/90 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
-                <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-                    <div class="flex min-w-0 items-center gap-3">
+            <header class="sticky top-0 z-20 border-b border-white/10 bg-[#101824]/90 px-3 py-3 backdrop-blur sm:px-6 lg:px-8 lg:py-4">
+                <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                    <div class="flex min-w-0 items-center gap-2 sm:gap-3">
                         <div v-if="isSidebarCollapsed" class="hidden lg:grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 shadow-lg shadow-cyan-500/20 mr-2" aria-hidden="true">
                             <svg viewBox="0 0 48 48" class="size-7 text-white" aria-hidden="true">
                                 <path fill="currentColor" d="M18 6h12v12h12v12H30v12H18V30H6V18h12z" />
                             </svg>
                         </div>
 
-                        <div class="grid size-11 place-items-center rounded-2xl border border-white/10 bg-white/5 text-teal-200 lg:hidden" aria-hidden="true">
+                        <button
+                            type="button"
+                            class="grid size-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 text-teal-200 transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-teal-300/50 lg:hidden"
+                            :aria-expanded="isMobileMenuOpen"
+                            aria-controls="mobile-primary-menu"
+                            aria-label="Abrir menu principal"
+                            @click="toggleMobileMenu"
+                        >
                             <svg viewBox="0 0 24 24" class="size-5" fill="currentColor" aria-hidden="true">
-                                <path d="M18 4h4v4h-4v4h-4V8h-4V4h4V0h4v4ZM4 9h8v2H4V9Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z" />
+                                <path v-if="!isMobileMenuOpen" d="M4 6.5h16v2H4v-2Zm0 4.5h16v2H4v-2Zm0 4.5h16v2H4v-2Z" />
+                                <path v-else d="m6.4 5 5.6 5.6L17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z" />
                             </svg>
+                        </button>
+
+                        <div class="min-w-0">
+                            <p class="truncate text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs sm:tracking-[0.22em]">Santa Lucia</p>
+                            <h1 v-if="props.title" class="mt-0.5 truncate text-lg font-black text-white sm:mt-1 sm:text-2xl lg:text-3xl">{{ props.title }}</h1>
                         </div>
 
-                        <div>
-                            <p class="text-xs font-bold uppercase tracking-[0.22em] text-teal-300">Santa Lucia</p>
-                            <h1 v-if="props.title" class="mt-1 text-2xl font-black text-white sm:text-3xl">{{ props.title }}</h1>
-                        </div>
+                        <div class="ml-auto flex min-w-0 max-w-[190px] items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 sm:hidden">
+                            <img
+                                v-if="userPhotoUrl"
+                                :src="userPhotoUrl"
+                                :alt="userLabel"
+                                class="size-8 rounded-full object-cover ring-2 ring-teal-300/30"
+                            >
+                            <span v-else class="grid size-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-xs font-black text-white">{{ userInitials }}</span>
+                            <span class="min-w-0">
+                                <span class="block truncate text-xs font-bold text-white">{{ userLabel }}</span>
+                                <span class="block truncate text-[10px] font-bold uppercase tracking-[0.1em] text-teal-200">{{ userRole }}</span>
+                            </span>
 
-                        
+                            <Dropdown align="right" width="40" :content-classes="['py-1','bg-[#0f1c27]','rounded-md']">
+                                <template #trigger>
+                                    <button class="rounded-lg px-2 py-1.5 text-xs font-bold text-teal-200 transition hover:bg-white/10 hover:text-white" type="button" aria-label="Abrir menu de usuario">
+                                        <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                                        </svg>
+                                    </button>
+                                </template>
+
+                                <template #content>
+                                    <button class="w-full text-left px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5 whitespace-nowrap min-w-max" @click="logout">Cerrar sesión</button>
+                                </template>
+                            </Dropdown>
+                        </div>
                     </div>
 
-                    <div class="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center xl:w-auto">
-                        <div class="relative w-full sm:min-w-[280px] sm:flex-1 xl:w-[360px] xl:flex-none">
-                            <svg class="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <div class="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3 xl:w-auto">
+                        <div class="relative w-full sm:min-w-[240px] sm:flex-1 xl:w-[360px] xl:flex-none">
+                            <svg class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-500 sm:left-4 sm:size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path d="m21 20-5.2-5.2a7 7 0 1 0-1 1L20 21l1-1Zm-11-6a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z" />
                             </svg>
                             <input
@@ -310,9 +351,9 @@ watch(isSettingsOpen, (value) => {
                                 autocomplete="off"
                                 @focus="searchOpen = true"
                                 @keydown.esc="searchOpen = false"
-                                class="h-12 w-full rounded-2xl border border-white/10 bg-white/5 pl-12 pr-4 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/60 focus:ring-4 focus:ring-teal-400/10"
+                                class="h-10 w-full rounded-xl border border-white/10 bg-white/5 pl-9 pr-3 text-xs font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-teal-300/60 focus:ring-4 focus:ring-teal-400/10 sm:h-12 sm:rounded-2xl sm:pl-12 sm:pr-4 sm:text-sm"
                             >
-                            <div v-if="searchOpen && searchQuery.trim().length >= 2" class="absolute right-0 top-14 z-50 max-h-[420px] w-full overflow-y-auto rounded-2xl border border-white/10 bg-[#0f1c27] p-2 shadow-2xl shadow-black/40">
+                            <div v-if="searchOpen && searchQuery.trim().length >= 2" class="absolute right-0 top-11 z-50 max-h-[320px] w-full overflow-y-auto rounded-xl border border-white/10 bg-[#0f1c27] p-2 shadow-2xl shadow-black/40 sm:top-14 sm:max-h-[420px] sm:rounded-2xl">
                                 <p v-if="searchLoading" class="px-3 py-4 text-sm font-semibold text-slate-400">Buscando...</p>
                                 <button
                                     v-for="result in searchResults"
@@ -332,22 +373,22 @@ watch(isSettingsOpen, (value) => {
                             </div>
                         </div>
 
-                        <div class="flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 sm:max-w-[320px] xl:max-w-none">
+                        <div class="hidden min-w-0 items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 sm:flex sm:max-w-[320px] sm:gap-3 sm:rounded-2xl sm:px-3 sm:py-2 xl:max-w-none">
                             <img
                                 v-if="userPhotoUrl"
                                 :src="userPhotoUrl"
                                 :alt="userLabel"
-                                class="size-10 rounded-full object-cover ring-2 ring-teal-300/30"
+                                class="size-8 rounded-full object-cover ring-2 ring-teal-300/30 sm:size-10"
                             >
-                            <span v-else class="grid size-10 place-items-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-sm font-black text-white">{{ userInitials }}</span>
+                            <span v-else class="grid size-8 place-items-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-xs font-black text-white sm:size-10 sm:text-sm">{{ userInitials }}</span>
                             <span class="min-w-0">
-                                <span class="block truncate text-sm font-bold text-white">{{ userLabel }}</span>
-                                <span class="block text-[11px] font-bold uppercase tracking-[0.12em] text-teal-200">{{ userRole }}</span>
+                                <span class="block truncate text-xs font-bold text-white sm:text-sm">{{ userLabel }}</span>
+                                <span class="block truncate text-[10px] font-bold uppercase tracking-[0.1em] text-teal-200 sm:text-[11px] sm:tracking-[0.12em]">{{ userRole }}</span>
                             </span>
 
                             <Dropdown align="right" width="40" :content-classes="['py-1','bg-[#0f1c27]','rounded-md']">
                                 <template #trigger>
-                                    <button class="rounded-xl px-3 py-2 text-xs font-bold text-teal-200 transition hover:bg-white/10 hover:text-white" type="button" aria-label="Abrir menú de usuario">
+                                    <button class="rounded-lg px-2 py-1.5 text-xs font-bold text-teal-200 transition hover:bg-white/10 hover:text-white sm:rounded-xl sm:px-3 sm:py-2" type="button" aria-label="Abrir menu de usuario">
                                         <svg class="size-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                             <path d="M6 10a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0zm6 0a2 2 0 11-4 0 2 2 0 014 0z" />
                                         </svg>
@@ -362,12 +403,17 @@ watch(isSettingsOpen, (value) => {
                     </div>
                 </div>
 
-                <nav class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label="Menu principal movil">
+                <nav
+                    v-show="isMobileMenuOpen"
+                    id="mobile-primary-menu"
+                    class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:hidden"
+                    aria-label="Menu principal movil"
+                >
                     <Link
                         v-for="item in [...navItems, ...settingsItems]"
                         :key="item.label"
                         :href="route(item.routeName)"
-                        class="shrink-0 rounded-2xl border px-4 py-2 text-xs font-black"
+                        class="min-w-0 truncate rounded-xl border px-3 py-2 text-center text-[11px] font-black"
                         :class="isRouteActive(item.routeName) ? 'border-teal-300/30 bg-teal-400/15 text-white' : 'border-white/10 bg-white/5 text-slate-300'"
                     >
                         {{ item.label }}
@@ -378,7 +424,7 @@ watch(isSettingsOpen, (value) => {
             <!-- Global toast / banner -->
             <Banner />
 
-            <main class="min-w-0 max-w-full overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
+            <main class="min-w-0 max-w-full overflow-x-hidden px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
                 <slot />
             </main>
         </section>

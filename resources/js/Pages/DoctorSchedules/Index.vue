@@ -153,14 +153,14 @@ const goTo = (url) => {
     <DashboardLayout>
         <!-- status flash moved to global toast Banner component -->
 
-        <div class="grid gap-6">
+        <div class="grid gap-4 sm:gap-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <button type="button" class="rounded-2xl bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 hover:bg-white/10" @click="showFilters = !showFilters">{{ showFilters ? 'Ocultar' : 'Filtros' }}</button>
+                    <button type="button" class="rounded-xl bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-white/10 sm:rounded-2xl sm:text-sm" @click="showFilters = !showFilters">{{ showFilters ? 'Ocultar' : 'Filtros' }}</button>
                 </div>
 
                 <div class="flex justify-end">
-                    <button type="button" class="rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-400 px-4 py-2 text-sm font-black text-slate-950 shadow-lg hover:opacity-95" @click="openCreate" :disabled="isDoctor && !myDoctor">+ Nuevo</button>
+                    <button type="button" class="rounded-xl bg-gradient-to-r from-teal-400 to-cyan-400 px-3 py-2 text-xs font-black text-slate-950 shadow-lg hover:opacity-95 sm:rounded-2xl sm:px-4 sm:text-sm" @click="openCreate" :disabled="isDoctor && !myDoctor">+ Nuevo</button>
                 </div>
             </div>
 
@@ -183,10 +183,10 @@ const goTo = (url) => {
 
             <DoctorScheduleTable :schedules="props.doctor_schedules.data" :is-doctor-view="isDoctor" @edit="editSchedule" @delete="deleteSchedule" @toggle="toggleSchedule" />
 
-            <div v-if="props.doctor_schedules.links" class="flex items-center justify-between px-2 py-4">
+            <div v-if="props.doctor_schedules.links" class="flex flex-col items-start gap-3 px-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-2 sm:py-4">
                 <div class="text-sm text-slate-400">Mostrando {{ props.doctor_schedules.from }} - {{ props.doctor_schedules.to }} de {{ props.doctor_schedules.total }}</div>
-                <div class="flex items-center gap-2">
-                    <button v-for="link in props.doctor_schedules.links" :key="link.label + (link.url || '')" v-html="translateLabel(link.label)" :disabled="!link.url" @click.prevent="goTo(link.url)" class="rounded-md px-3 py-1 text-sm font-bold text-slate-300 hover:bg-white/10 disabled:opacity-40" :class="link.active ? 'bg-white/10' : ''"></button>
+                <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <button v-for="link in props.doctor_schedules.links" :key="link.label + (link.url || '')" v-html="translateLabel(link.label)" :disabled="!link.url" @click.prevent="goTo(link.url)" class="rounded-md px-2.5 py-1 text-xs font-bold text-slate-300 hover:bg-white/10 disabled:opacity-40 sm:px-3 sm:text-sm" :class="link.active ? 'bg-white/10' : ''"></button>
                 </div>
             </div>
 

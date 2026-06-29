@@ -27,6 +27,83 @@ class ReportController extends Controller
         'EXPIRED' => 'Vencida',
     ];
 
+    private const SECTION_TITLES = [
+        'dashboard' => 'Resumen general',
+        'period' => 'Citas por periodo',
+        'doctor' => 'Citas por medico',
+        'specialty' => 'Citas por especialidad',
+        'patient' => 'Historial de pacientes',
+        'absences' => 'Inasistencias y cancelaciones',
+        'new_patients' => 'Pacientes nuevos',
+    ];
+
+    private const EXPORT_COLUMNS = [
+        'dashboard' => [
+            'indicador' => 'Indicador',
+            'valor' => 'Valor',
+        ],
+        'period' => [
+            'period' => 'Periodo',
+            'total' => 'Total de citas',
+            'pending' => 'Pendientes',
+            'attended' => 'Atendidas',
+            'cancelled' => 'Canceladas',
+            'no_show' => 'No asistio',
+        ],
+        'doctor' => [
+            'doctor' => 'Medico',
+            'total' => 'Total de citas',
+            'attended' => 'Atendidas',
+            'pending' => 'Pendientes',
+            'cancelled' => 'Canceladas',
+            'no_show' => 'No asistio',
+        ],
+        'specialty' => [
+            'specialty' => 'Especialidad',
+            'total' => 'Total de citas',
+            'attended' => 'Atendidas',
+            'pending' => 'Pendientes',
+            'cancelled' => 'Canceladas',
+        ],
+        'patient' => [
+            'paciente' => 'Paciente',
+            'documento' => 'Documento',
+            'fecha' => 'Fecha',
+            'hora' => 'Hora',
+            'medico' => 'Medico',
+            'especialidad' => 'Especialidad',
+            'motivo' => 'Motivo',
+            'estado' => 'Estado',
+        ],
+        'absences' => [
+            'paciente' => 'Paciente',
+            'documento' => 'Documento',
+            'fecha' => 'Fecha',
+            'hora' => 'Hora',
+            'medico' => 'Medico',
+            'especialidad' => 'Especialidad',
+            'estado' => 'Estado',
+            'motivo_cancelacion' => 'Motivo de cancelacion',
+        ],
+        'new_patients' => [
+            'period' => 'Periodo',
+            'total' => 'Pacientes nuevos',
+        ],
+    ];
+
+    private const SUMMARY_LABELS = [
+        'total_appointments' => 'Total de citas',
+        'today_appointments' => 'Citas de hoy',
+        'pending_appointments' => 'Citas pendientes',
+        'attended_appointments' => 'Citas atendidas',
+        'cancelled_appointments' => 'Citas canceladas',
+        'attended_patients' => 'Pacientes atendidos',
+        'top_doctor' => 'Medico con mas citas',
+        'top_doctor_total' => 'Citas del medico destacado',
+        'top_specialty' => 'Especialidad con mas citas',
+        'top_specialty_total' => 'Citas de la especialidad destacada',
+    ];
+
     public function index(Request $request): Response
     {
         $filters = $this->validatedFilters($request);
@@ -69,33 +146,32 @@ class ReportController extends Controller
             'section' => ['nullable', Rule::in(['dashboard', 'period', 'doctor', 'specialty', 'patient', 'absences', 'new_patients'])],
         ])['section'] ?? 'dashboard';
 
-        $rows = $this->exportRows($section, $filters);
-        $filename = 'reporte-'.$section.'-'.now()->format('Ymd-His');
+        $rows = $this->localizedExportRows($section, $filters);
+        $filename = 'reporte-'.$this->sectionSlug($section).'-'.now()->format('Ymd-His');
 
         if ($format === 'pdf') {
-            return response($this->printableHtml($rows, $section), 200, [
+            return response($this->printableHtml($rows, $section, $filters), 200, [
                 'Content-Type' => 'text/html; charset=UTF-8',
             ]);
         }
 
         if ($format === 'xlsx') {
-            return response()->streamDownload(function () use ($rows, $section) {
-                echo $this->excelHtml($rows, $section);
+            return response()->streamDownload(function () use ($rows, $section, $filters) {
+                echo $this->excelHtml($rows, $section, $filters);
             }, $filename.'.xls', [
                 'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
             ]);
         }
 
-        return response()->streamDownload(function () use ($rows) {
+        return response()->streamDownload(function () use ($rows, $section) {
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
-            if ($rows->isNotEmpty()) {
-                fputcsv($handle, array_keys($rows->first()));
-            }
+            $headers = $rows->isNotEmpty() ? array_keys($rows->first()) : $this->exportHeaders($section);
+            fputcsv($handle, $headers);
 
             foreach ($rows as $row) {
-                fputcsv($handle, $row);
+                fputcsv($handle, collect($headers)->map(fn (string $header) => $row[$header] ?? '')->all());
             }
 
             fclose($handle);
@@ -464,10 +540,27 @@ class ReportController extends Controller
             'absences' => $this->absenceRows($filters),
             'new_patients' => $this->patientRows($filters),
             default => collect($this->summary($filters))->map(fn ($value, $key) => [
-                'indicador' => $key,
+                'indicador' => self::SUMMARY_LABELS[$key] ?? $key,
                 'valor' => $value,
             ])->values(),
         };
+    }
+
+    private function localizedExportRows(string $section, array $filters)
+    {
+        $columns = self::EXPORT_COLUMNS[$section] ?? self::EXPORT_COLUMNS['dashboard'];
+
+        return $this->exportRows($section, $filters)
+            ->map(function (array $row) use ($columns) {
+                return collect($columns)
+                    ->mapWithKeys(fn (string $label, string $key) => [$label => $row[$key] ?? ''])
+                    ->all();
+            });
+    }
+
+    private function exportHeaders(string $section): array
+    {
+        return array_values(self::EXPORT_COLUMNS[$section] ?? self::EXPORT_COLUMNS['dashboard']);
     }
 
     private function patientHistoryRows(array $filters)
@@ -507,18 +600,21 @@ class ReportController extends Controller
             ]);
     }
 
-    private function printableHtml($rows, string $section): string
+    private function printableHtml($rows, string $section, array $filters): string
     {
-        $title = 'Reporte '.str_replace('_', ' ', $section);
-        $headers = $rows->isNotEmpty() ? array_keys($rows->first()) : [];
+        $title = self::SECTION_TITLES[$section] ?? 'Reporte';
+        $headers = $rows->isNotEmpty() ? array_keys($rows->first()) : $this->exportHeaders($section);
         $body = $rows->map(function (array $row) use ($headers) {
             $cells = collect($headers)
-                ->map(fn ($header) => '<td>'.e((string) ($row[$header] ?? '')).'</td>')
+                ->map(fn ($header) => '<td>'.e($this->stringValue($row[$header] ?? '')).'</td>')
                 ->implode('');
 
             return '<tr>'.$cells.'</tr>';
         })->implode('');
         $head = collect($headers)->map(fn ($header) => '<th>'.e($header).'</th>')->implode('');
+        $range = e($this->dateRangeLabel($filters));
+        $generatedAt = e(now()->format('d/m/Y H:i'));
+        $empty = $rows->isEmpty() ? '<p class="empty">No hay datos para los filtros seleccionados.</p>' : '';
 
         return <<<HTML
 <!doctype html>
@@ -527,31 +623,93 @@ class ReportController extends Controller
     <meta charset="utf-8">
     <title>{$title}</title>
     <style>
-        body { font-family: Arial, sans-serif; color: #0f172a; margin: 32px; }
-        h1 { font-size: 22px; margin-bottom: 18px; }
-        table { border-collapse: collapse; width: 100%; font-size: 12px; }
-        th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
-        th { background: #e2e8f0; }
+        @page { margin: 22mm 18mm; }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; color: #122033; margin: 0; background: #fff; }
+        .report-header { border-bottom: 3px solid #1ecad3; padding-bottom: 16px; margin-bottom: 22px; }
+        .brand { color: #0f766e; font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+        h1 { color: #0f172a; font-size: 24px; margin: 8px 0 8px; }
+        .meta { display: flex; gap: 18px; color: #526173; font-size: 12px; font-weight: 700; }
+        table { border-collapse: collapse; width: 100%; font-size: 11px; }
+        th { background: #122033; color: #fff; border: 1px solid #122033; padding: 9px; text-align: left; text-transform: uppercase; letter-spacing: .04em; }
+        td { border: 1px solid #d7dee8; padding: 8px 9px; text-align: left; vertical-align: top; }
+        tr:nth-child(even) td { background: #f6f9fc; }
+        .empty { border: 1px dashed #cbd5e1; border-radius: 12px; color: #64748b; padding: 18px; text-align: center; }
+        .footer { color: #64748b; font-size: 10px; margin-top: 22px; }
+        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     </style>
 </head>
 <body>
-    <h1>{$title}</h1>
+    <header class="report-header">
+        <div class="brand">Clinica Santa Lucia</div>
+        <h1>{$title}</h1>
+        <div class="meta">
+            <span>{$range}</span>
+            <span>Generado: {$generatedAt}</span>
+        </div>
+    </header>
+    {$empty}
     <table><thead><tr>{$head}</tr></thead><tbody>{$body}</tbody></table>
+    <p class="footer">Documento generado automaticamente por el sistema de reportes de Santa Lucia.</p>
     <script>window.print()</script>
 </body>
 </html>
 HTML;
     }
 
-    private function excelHtml($rows, string $section): string
+    private function excelHtml($rows, string $section, array $filters): string
     {
-        $headers = $rows->isNotEmpty() ? array_keys($rows->first()) : [];
-        $head = collect($headers)->map(fn ($header) => '<th>'.e($header).'</th>')->implode('');
+        $title = self::SECTION_TITLES[$section] ?? 'Reporte';
+        $headers = $rows->isNotEmpty() ? array_keys($rows->first()) : $this->exportHeaders($section);
+        $colspan = max(count($headers), 1);
+        $head = collect($headers)->map(fn ($header) => '<th style="background:#122033;color:#ffffff;border:1px solid #122033;padding:8px;text-align:left;">'.e($header).'</th>')->implode('');
         $body = $rows->map(function (array $row) use ($headers) {
-            return '<tr>'.collect($headers)->map(fn ($header) => '<td>'.e((string) ($row[$header] ?? '')).'</td>')->implode('').'</tr>';
+            return '<tr>'.collect($headers)->map(fn ($header) => '<td style="border:1px solid #d7dee8;padding:7px;">'.e($this->stringValue($row[$header] ?? '')).'</td>')->implode('').'</tr>';
         })->implode('');
+        $range = e($this->dateRangeLabel($filters));
+        $generatedAt = e(now()->format('d/m/Y H:i'));
 
-        return '<html><meta charset="utf-8"><body><table><caption>Reporte '.e($section).'</caption><thead><tr>'.$head.'</tr></thead><tbody>'.$body.'</tbody></table></body></html>';
+        return '<html><meta charset="utf-8"><body>'.
+            '<table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;">'.
+            '<tr><td colspan="'.$colspan.'" style="font-size:18px;font-weight:800;color:#0f172a;padding:10px 8px;">'.e($title).'</td></tr>'.
+            '<tr><td colspan="'.$colspan.'" style="font-weight:700;color:#0f766e;padding:6px 8px;">Clinica Santa Lucia</td></tr>'.
+            '<tr><td colspan="'.$colspan.'" style="color:#526173;padding:6px 8px;">'.$range.' | Generado: '.$generatedAt.'</td></tr>'.
+            '<tr>'.$head.'</tr>'.$body.
+            '</table></body></html>';
+    }
+
+    private function dateRangeLabel(array $filters): string
+    {
+        $start = Carbon::parse($filters['start_date'])->format('d/m/Y');
+        $end = Carbon::parse($filters['end_date'])->format('d/m/Y');
+
+        return "Periodo: {$start} - {$end}";
+    }
+
+    private function sectionSlug(string $section): string
+    {
+        return [
+            'dashboard' => 'resumen-general',
+            'period' => 'citas-por-periodo',
+            'doctor' => 'citas-por-medico',
+            'specialty' => 'citas-por-especialidad',
+            'patient' => 'historial-pacientes',
+            'absences' => 'inasistencias',
+            'new_patients' => 'pacientes-nuevos',
+        ][$section] ?? str_replace('_', '-', $section);
+    }
+
+    private function stringValue($value): string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('d/m/Y H:i');
+        }
+
+        if (is_bool($value)) {
+            return $value ? 'Si' : 'No';
+        }
+
+        return (string) $value;
     }
 
     private function formatTime($value): ?string

@@ -36,10 +36,10 @@ const cancel = () => router.get(toRelativeUrl(route('appointments.index')));
     <Head title="Nueva cita" />
 
     <DashboardLayout>
-        <div class="grid gap-6">
+        <div class="grid gap-4 sm:gap-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <h2 class="text-2xl font-black text-white">Reservar cita</h2>
+                    <h2 class="text-xl font-black text-white sm:text-2xl">Reservar cita</h2>
                     <p class="text-sm text-slate-400">Complete los datos para reservar una cita.</p>
                 </div>
             </div>

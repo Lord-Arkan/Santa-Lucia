@@ -1,18 +1,52 @@
 <script setup>
+import RowActionMenu from '@/Components/ui/RowActionMenu.vue';
+
 const props = defineProps({
     doctors: { type: Array, required: true },
 });
 
 const emit = defineEmits(['edit', 'delete', 'toggle']);
+
+const doctorActions = (doctor) => [
+    { key: 'toggle', label: doctor.status === 'activo' ? 'Inhabilitar' : 'Habilitar', tone: doctor.status === 'activo' ? 'warning' : 'success' },
+    { key: 'edit', label: 'Editar' },
+    { key: 'delete', label: 'Eliminar', tone: 'danger' },
+];
+
+const handleAction = (doctor, action) => {
+    emit(action.key, doctor);
+};
 </script>
 
 <template>
-    <section class="overflow-hidden rounded-[2rem] border border-white/10 bg-[#162130] shadow-xl shadow-slate-950/10">
-        <div class="border-b border-white/10 p-5">
-            <p class="text-xs font-bold uppercase tracking-[0.24em] text-teal-300">Doctores</p>
+    <section class="rounded-2xl border border-white/10 bg-[#162130] shadow-xl shadow-slate-950/10 sm:rounded-[2rem]">
+        <div class="border-b border-white/10 p-4 sm:p-5">
+            <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-teal-300 sm:text-xs sm:tracking-[0.24em]">Doctores</p>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="grid gap-3 p-3 sm:hidden">
+            <article v-for="doctor in doctors" :key="doctor.doctor_id" class="rounded-2xl border border-white/10 bg-slate-950/30 p-3">
+                <div class="flex items-start gap-3">
+                    <span :class="['grid size-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 text-xs font-black', doctor.status === 'inactivo' ? 'text-rose-200' : 'text-white']">
+                        {{ (doctor.user?.name || '').slice(0,1).toUpperCase() }}
+                    </span>
+                    <div class="min-w-0 flex-1">
+                        <p :class="['truncate text-sm font-black', doctor.status === 'inactivo' ? 'text-rose-400' : 'text-white']">{{ doctor.user?.name }}</p>
+                        <p :class="['mt-1 truncate text-xs font-semibold', doctor.status === 'inactivo' ? 'text-rose-300' : 'text-slate-400']">{{ doctor.specialty }}</p>
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-2 gap-2 text-xs font-semibold">
+                    <p :class="doctor.status === 'inactivo' ? 'text-rose-300' : 'text-slate-400'"><span class="block text-slate-500">Licencia</span>{{ doctor.license_number }}</p>
+                    <p :class="doctor.status === 'inactivo' ? 'text-rose-300' : 'text-slate-400'"><span class="block text-slate-500">Alta</span>{{ doctor.created_at }}</p>
+                </div>
+                <div class="mt-3 flex justify-end">
+                    <RowActionMenu :actions="doctorActions(doctor)" @select="handleAction(doctor, $event)" />
+                </div>
+            </article>
+            <p v-if="!doctors.length" class="py-6 text-center text-sm font-semibold text-slate-500">No hay doctores registrados.</p>
+        </div>
+
+        <div class="hidden overflow-x-auto sm:block">
             <table class="min-w-[820px] w-full text-left">
                 <thead class="bg-slate-950/30 text-xs uppercase tracking-[0.16em] text-slate-500">
                     <tr>
@@ -40,34 +74,8 @@ const emit = defineEmits(['edit', 'delete', 'toggle']);
                         </td>
                         <td :class="['px-5 py-4 text-sm font-semibold', doctor.status === 'inactivo' ? 'text-rose-300' : 'text-slate-400']">{{ doctor.license_number }}</td>
                         <td class="px-5 py-4">
-                            <div class="flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    :class="[
-                                        'rounded-xl border px-3 py-2 text-xs font-black transition',
-                                        doctor.status === 'activo'
-                                            ? 'border-amber-300/20 text-amber-200 hover:bg-amber-400/10'
-                                            : 'border-emerald-300/20 text-emerald-200 hover:bg-emerald-400/10'
-                                    ]"
-                                    @click="$emit('toggle', doctor)"
-                                >
-                                    {{ doctor.status === 'activo' ? 'Inhabilitar' : 'Habilitar' }}
-                                </button>
-                                <button
-                                    type="button"
-                                    class="rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-slate-300 transition hover:bg-white/10 hover:text-white"
-                                    @click="$emit('edit', doctor)"
-                                >
-                                    Editar
-                                </button>
-
-                                <button
-                                    type="button"
-                                    class="rounded-xl border border-rose-300/20 px-3 py-2 text-xs font-black text-rose-200 transition hover:bg-rose-400/10"
-                                    @click="$emit('delete', doctor)"
-                                >
-                                    Eliminar
-                                </button>
+                            <div class="flex justify-end">
+                                <RowActionMenu :actions="doctorActions(doctor)" @select="handleAction(doctor, $event)" />
                             </div>
                         </td>
                     </tr>

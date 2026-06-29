@@ -133,7 +133,7 @@ const cancel = () => {
 </script>
 
 <template>
-    <div class="p-4">
+    <div class="p-2 sm:p-4">
         <div class="grid gap-3 sm:grid-cols-2">
             <div>
                 <label class="block text-xs font-bold text-slate-400">Especialidad</label>
@@ -176,7 +176,7 @@ const cancel = () => {
         </div>
 
         <div class="mt-4">
-            <button type="button" class="rounded-2xl bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 hover:bg-white/10" @click="fetchSlots" :disabled="loadingSlots">Buscar disponibilidad</button>
+            <button type="button" class="w-full rounded-xl bg-white/5 px-3 py-2 text-sm font-bold text-slate-300 hover:bg-white/10 sm:w-auto sm:rounded-2xl" @click="fetchSlots" :disabled="loadingSlots">Buscar disponibilidad</button>
         </div>
 
         <div class="mt-4">
@@ -187,9 +187,9 @@ const cancel = () => {
             </div>
         </div>
 
-        <div class="mt-6 flex justify-end gap-2">
-            <button type="button" class="rounded-2xl border border-white/10 px-4 py-2 text-sm font-black text-slate-300" @click="cancel">Cancelar</button>
-            <button type="button" class="rounded-2xl bg-gradient-to-r from-teal-400 to-cyan-400 px-4 py-2 text-sm font-black text-slate-950" @click="submit">Reservar</button>
+        <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button type="button" class="rounded-xl border border-white/10 px-4 py-2 text-sm font-black text-slate-300 sm:rounded-2xl" @click="cancel">Cancelar</button>
+            <button type="button" class="rounded-xl bg-gradient-to-r from-teal-400 to-cyan-400 px-4 py-2 text-sm font-black text-slate-950 sm:rounded-2xl" @click="submit">Reservar</button>
         </div>
         
         <DialogModal :show="showPatientModal" @close="showPatientModal = false" max-width="2xl">
